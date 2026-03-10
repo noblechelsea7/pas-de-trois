@@ -1,0 +1,65 @@
+name: korea_proxy
+description: "Pas de trois — Korean proxy shopping platform."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.6.1
+  riverpod_annotation: ^2.6.1
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Backend
+  supabase_flutter: ^2.9.1
+
+  # Immutable models & serialization
+  freezed_annotation: ^2.4.4
+  json_annotation: ^4.9.0
+
+  # Image
+  cached_network_image: ^3.4.1
+
+  # Environment
+  flutter_dotenv: ^5.2.1
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+  # Code generation
+  build_runner: ^2.4.14
+  riverpod_generator: ^2.6.3
+  freezed: ^2.5.8
+  json_serializable: ^6.9.4
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - .env
+    - assets/images/
+
+  # fonts:
+  #   - family: Pretendard
+  #     fonts:
+  #       - asset: assets/fonts/Pretendard-Regular.ttf
+  #       - asset: assets/fonts/Pretendard-Medium.ttf
+  #         weight: 500
+  #       - asset: assets/fonts/Pretendard-SemiBold.ttf
+  #         weight: 600
+  #       - asset: assets/fonts/Pretendard-Bold.ttf
+  #         weight: 700
