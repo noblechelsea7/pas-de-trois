@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'web_history_stub.dart'
+    if (dart.library.html) 'web_history_web.dart';
+
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/shipping_constants.dart';
 import '../../../../core/layout/web_nav_bar.dart';
@@ -172,6 +175,9 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
       ref.read(cartItemsProvider.notifier).clear();
 
       if (mounted) {
+        // Replace checkout's browser history entry with /#/ before leaving,
+        // so pressing back from success (or later pages) never returns here.
+        replaceHistoryWithHome();
         context.go('/order-success/$orderId');
       }
     } catch (e) {
