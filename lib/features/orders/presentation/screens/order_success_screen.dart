@@ -32,19 +32,6 @@ class OrderSuccessScreen extends ConsumerStatefulWidget {
 
 class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
   @override
-  void initState() {
-    super.initState();
-    // GoRouter's pushState is async (platform channel), so we must delay
-    // our replaceState to run AFTER GoRouter has finished adding the
-    // success page entry to browser history.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        if (mounted) replaceHistoryWithHome();
-      });
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isWeb = AppBreakpoints.isWeb(context);
     final orderNumberAsync = ref.watch(orderNumberProvider(widget.orderId));
