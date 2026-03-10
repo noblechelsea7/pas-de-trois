@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -35,10 +34,13 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
   @override
   void initState() {
     super.initState();
-    // Replace the success-page browser history entry with '/' immediately
-    // so pressing browser back never returns here.
+    // GoRouter's pushState is async (platform channel), so we must delay
+    // our replaceState to run AFTER GoRouter has finished adding the
+    // success page entry to browser history.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      replaceHistoryWithHome();
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) replaceHistoryWithHome();
+      });
     });
   }
 
@@ -104,18 +106,11 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      if (kIsWeb) {
-                        // Web: history already replaced in initState;
-                        // go() is clean, no back to success.
-                        context.go('/orders');
-                      } else {
-                        // App: go('/') clears stack, then push orders on top.
-                        // Back stack: 首頁 → 訂單列表
-                        context.go('/');
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          if (mounted) context.push('/orders');
-                        });
-                      }
+                      // Synchronously replace the current (success) history
+                      // entry before GoRouter pushes the next one.
+                      // On App this is a no-op (stub).
+                      replaceHistoryWithHome();
+                      context.go('/orders');
                     },
                     child: const Text('查看我的訂單'),
                   ),
@@ -124,7 +119,10 @@ class _OrderSuccessScreenState extends ConsumerState<OrderSuccessScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () => context.go('/products'),
+                    onPressed: () {
+                      replaceHistoryWithHome();
+                      context.go('/products');
+                    },
                     child: const Text('繼續購物'),
                   ),
                 ),

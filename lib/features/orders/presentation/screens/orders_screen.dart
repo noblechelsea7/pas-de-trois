@@ -59,7 +59,13 @@ class OrdersScreen extends ConsumerWidget {
               elevation: 0,
               title: const Text('我的訂單'),
               leading: IconButton(
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  if (context.canPop()) {
+                    context.pop();
+                  } else {
+                    context.go('/');
+                  }
+                },
                 icon: const Icon(Icons.arrow_back_ios, size: 20),
               ),
             ),
