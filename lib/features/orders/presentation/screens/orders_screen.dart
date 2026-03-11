@@ -17,36 +17,44 @@ class OrdersScreen extends ConsumerWidget {
     final isWeb = AppBreakpoints.isWeb(context);
     final ordersAsync = ref.watch(userOrdersProvider);
 
-    Widget body = ordersAsync.when(
-      loading: () => const Center(
-        child: CircularProgressIndicator(color: AppColors.primary),
-      ),
-      error: (e, _) => Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('載入失敗', style: AppTextStyles.titleMedium),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: () => ref.invalidate(userOrdersProvider),
-              child: const Text('重試'),
+    Widget content = Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: ordersAsync.when(
+          loading: () => const Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
+          error: (e, _) => Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('載入失敗', style: AppTextStyles.titleMedium),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: () => ref.invalidate(userOrdersProvider),
+                  child: const Text('重試'),
+                ),
+              ],
             ),
-          ],
+          ),
+          data: (orders) {
+            if (orders.isEmpty) return _EmptyOrders(isWeb: isWeb);
+            return _OrderList(orders: orders, isWeb: isWeb);
+          },
         ),
       ),
-      data: (orders) {
-        if (orders.isEmpty) return _EmptyOrders(isWeb: isWeb);
-        return _OrderList(orders: orders, isWeb: isWeb);
-      },
     );
 
+    Widget body;
     if (isWeb) {
       body = Column(
         children: [
           const WebNavBarStandalone(),
-          Expanded(child: body),
+          Expanded(child: content),
         ],
       );
+    } else {
+      body = content;
     }
 
     return Scaffold(

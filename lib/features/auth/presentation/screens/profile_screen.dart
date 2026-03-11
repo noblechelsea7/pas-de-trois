@@ -21,7 +21,10 @@ class ProfileScreen extends ConsumerWidget {
     final ordersAsync = ref.watch(userOrdersProvider);
     final profile = profileAsync.valueOrNull;
 
-    return CustomScrollView(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: CustomScrollView(
       slivers: [
         // ── Gradient header ──
         SliverToBoxAdapter(
@@ -53,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
 
         // ── Menu ──
         SliverPadding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
           sliver: SliverList(
             delegate: SliverChildListDelegate([
               _MenuSection(
@@ -111,6 +114,8 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
       ],
+        ),
+      ),
     );
   }
 }

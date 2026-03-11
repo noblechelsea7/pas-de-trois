@@ -33,7 +33,10 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(wishlistProductsProvider);
 
-    return CustomScrollView(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: CustomScrollView(
       controller: _scrollCtrl,
       slivers: [
         productsAsync.when(
@@ -52,6 +55,8 @@ class _WishlistScreenState extends ConsumerState<WishlistScreen> {
               : _WishlistGrid(products: products),
         ),
       ],
+        ),
+      ),
     );
   }
 }

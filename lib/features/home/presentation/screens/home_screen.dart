@@ -36,9 +36,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         SliverToBoxAdapter(child: _HeroBanner(onShopNow: () => context.go(RoutePaths.products))),
         SliverToBoxAdapter(child: _AnnouncementBanner()),
         SliverToBoxAdapter(
-          child: _NewArrivalsSection(hPad: hPad, isWeb: isWeb),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: _NewArrivalsSection(hPad: hPad, isWeb: isWeb),
+            ),
+          ),
         ),
-        SliverToBoxAdapter(child: _BrandFeatures(hPad: hPad)),
+        SliverToBoxAdapter(
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1200),
+              child: _BrandFeatures(hPad: hPad),
+            ),
+          ),
+        ),
         const SliverToBoxAdapter(child: SizedBox(height: 48)),
       ],
     );

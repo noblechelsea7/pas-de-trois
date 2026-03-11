@@ -83,7 +83,10 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
     final selectedVariants =
         ref.watch(selectedVariantsProvider(product.id));
 
-    return CustomScrollView(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: CustomScrollView(
       slivers: [
         // Fixed-height image gallery
         SliverToBoxAdapter(
@@ -208,6 +211,8 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
           ),
         ),
       ],
+        ),
+      ),
     );
   }
 }

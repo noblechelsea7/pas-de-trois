@@ -23,11 +23,16 @@ class CartScreen extends ConsumerWidget {
     final isWeb = AppBreakpoints.isWeb(context);
     final hPad = isWeb ? 24.0 : 16.0;
 
-    if (cartItems.isEmpty) {
-      return _EmptyCart(hPad: hPad);
-    }
+    final child = cartItems.isEmpty
+        ? _EmptyCart(hPad: hPad)
+        : _CartContent(cartItems: cartItems, hPad: hPad);
 
-    return _CartContent(cartItems: cartItems, hPad: hPad);
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: child,
+      ),
+    );
   }
 }
 

@@ -30,7 +30,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
     final productsAsync = ref.watch(productsProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
 
-    return CustomScrollView(
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1200),
+        child: CustomScrollView(
       controller: _scrollController,
       slivers: [
         // App bar with search field
@@ -139,6 +142,8 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           },
         ),
       ],
+        ),
+      ),
     );
   }
 }
