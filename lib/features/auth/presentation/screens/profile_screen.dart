@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/router/app_router.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../orders/presentation/providers/order_providers.dart';
 import '../providers/auth_providers.dart';
 
 class ProfileScreen extends ConsumerWidget {
@@ -18,134 +18,91 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profileAsync = ref.watch(userProfileProvider);
+    final ordersAsync = ref.watch(userOrdersProvider);
+    final profile = profileAsync.valueOrNull;
 
-    // Shell 已提供外層 Scaffold，這裡只用 CustomScrollView
     return CustomScrollView(
       slivers: [
-        SliverAppBar(
-          title: const Text('個人中心'),
-          pinned: true,
-          backgroundColor: AppColors.background,
-          foregroundColor: AppColors.textPrimary,
-          elevation: 0,
-        ),
-        profileAsync.when(
-          loading: () => const SliverFillRemaining(
-            child: Center(child: CircularProgressIndicator()),
+        // ── Gradient header ──
+        SliverToBoxAdapter(
+          child: profileAsync.when(
+            loading: () => _HeaderSkeleton(),
+            error: (err, st) => _HeaderSkeleton(),
+            data: (p) => _ProfileHeader(profile: p),
           ),
-          error: (error, stack) => SliverFillRemaining(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline,
-                      size: 48, color: AppColors.error),
-                  const SizedBox(height: 16),
-                  Text(
-                    '載入失敗',
-                    style: AppTextStyles.headlineSmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    error.toString(),
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.textSecondary),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton(
-                    onPressed: () =>
-                        ref.invalidate(userProfileProvider),
-                    child: const Text('重試'),
-                  ),
-                  const SizedBox(height: 12),
-                  OutlinedButton.icon(
-                    onPressed: () => _signOut(context, ref),
-                    icon: const Icon(Icons.logout, size: 18),
-                    label: const Text('登出'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(color: AppColors.error),
-                    ),
-                  ),
-                ],
+        ),
+
+        // ── Order status strip ──
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: Transform.translate(
+              offset: const Offset(0, -20),
+              child: _OrderStatusStrip(
+                ordersAsync: ordersAsync,
+                onTap: () => context.push(RoutePaths.orders),
               ),
             ),
           ),
-          data: (profile) => SliverPadding(
-            padding: const EdgeInsets.all(24),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Avatar
-                Center(
-                  child: CircleAvatar(
-                    radius: 40,
-                    backgroundColor: AppColors.surface,
-                    child: Text(
-                      (profile?.fullName?.isNotEmpty == true
-                              ? profile!.fullName![0]
-                              : profile?.email[0] ?? '?')
-                          .toUpperCase(),
-                      style: AppTextStyles.headlineLarge
-                          .copyWith(color: AppColors.primary),
+        ),
+
+        // ── Menu ──
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              _MenuSection(
+                items: [
+                  _MenuItem(
+                    icon: Icons.receipt_long_outlined,
+                    label: '我的訂單',
+                    onTap: () => context.push(RoutePaths.orders),
+                  ),
+                  _MenuItem(
+                    icon: Icons.location_on_outlined,
+                    label: '收件地址',
+                    onTap: () => context.push(RoutePaths.profileAddress),
+                  ),
+                  _MenuItem(
+                    icon: Icons.favorite_border_rounded,
+                    label: '關心商品',
+                    onTap: () => context.push(RoutePaths.wishlist),
+                  ),
+                  _MenuItem(
+                    icon: Icons.person_outline_rounded,
+                    label: '個人資料編輯',
+                    onTap: () => context.push(RoutePaths.profileEdit),
+                  ),
+                ],
+              ),
+              if (profile?.isAdmin == true) ...[
+                const SizedBox(height: 12),
+                _MenuSection(
+                  items: [
+                    _MenuItem(
+                      icon: Icons.admin_panel_settings_outlined,
+                      label: '管理後台',
+                      labelColor: AppColors.primary,
+                      onTap: () => context.go(RoutePaths.adminDashboard),
                     ),
+                  ],
+                ),
+              ],
+              const SizedBox(height: 24),
+              OutlinedButton.icon(
+                onPressed: () => _signOut(context, ref),
+                icon: const Icon(Icons.logout_rounded, size: 18),
+                label: const Text('登出'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                  minimumSize: const Size(double.infinity, 48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                const SizedBox(height: 16),
-                Center(
-                  child: Text(
-                    profile?.fullName ?? '未設定姓名',
-                    style: AppTextStyles.headlineSmall,
-                  ),
-                ),
-                Center(
-                  child: Text(
-                    profile?.email ?? '',
-                    style: AppTextStyles.bodySmall
-                        .copyWith(color: AppColors.textSecondary),
-                  ),
-                ),
-                const SizedBox(height: 32),
-                const Divider(),
-                const SizedBox(height: 16),
-                _InfoTile(label: '手機', value: profile?.phone ?? '未設定'),
-                const SizedBox(height: 12),
-                _InfoTile(
-                  label: '帳號角色',
-                  value: profile?.role == 'admin' ? '管理員' : '一般會員',
-                ),
-                const SizedBox(height: 12),
-                _InfoTile(label: '點數', value: '${profile?.points ?? 0} 點'),
-                const SizedBox(height: 24),
-                const Divider(),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.receipt_long_outlined),
-                  title: const Text('我的訂單'),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () => context.push(RoutePaths.orders),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('帳號設定'),
-                  trailing: const Icon(Icons.chevron_right, size: 20),
-                  onTap: () {},
-                ),
-                const Divider(),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: () => _signOut(context, ref),
-                  icon: const Icon(Icons.logout, size: 18),
-                  label: const Text('登出'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.error,
-                    side: const BorderSide(color: AppColors.error),
-                  ),
-                ),
-              ]),
-            ),
+              ),
+            ]),
           ),
         ),
       ],
@@ -153,25 +110,261 @@ class ProfileScreen extends ConsumerWidget {
   }
 }
 
-class _InfoTile extends StatelessWidget {
-  const _InfoTile({required this.label, required this.value});
-  final String label;
-  final String value;
+// ---------------------------------------------------------------------------
+// Gradient header
+// ---------------------------------------------------------------------------
+
+class _HeaderSkeleton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            Color.lerp(AppColors.primary, AppColors.surface, 0.35)!,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+      ),
+    );
+  }
+}
+
+class _ProfileHeader extends StatelessWidget {
+  const _ProfileHeader({required this.profile});
+  final dynamic profile; // UserProfile?
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 72,
-          child: Text(
-            label,
-            style: AppTextStyles.bodySmall
-                .copyWith(color: AppColors.textSecondary),
-          ),
+    final initials = (profile?.fullName?.isNotEmpty == true
+            ? (profile!.fullName as String)[0]
+            : profile?.email?[0] ?? '?')
+        .toUpperCase();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 52, 24, 44),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            AppColors.primary,
+            Color.lerp(AppColors.primary, AppColors.surface, 0.35)!,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
         ),
-        Expanded(child: Text(value, style: AppTextStyles.bodyMedium)),
-      ],
+      ),
+      child: Column(
+        children: [
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: Colors.white.withValues(alpha: 0.95),
+            child: Text(
+              initials,
+              style: AppTextStyles.headlineLarge.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            profile?.fullName ?? '未設定姓名',
+            style: AppTextStyles.headlineSmall.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            profile?.email ?? '',
+            style: AppTextStyles.bodySmall.copyWith(
+              color: Colors.white.withValues(alpha: 0.75),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Order status strip
+// ---------------------------------------------------------------------------
+
+const _kStatusIcons = <String, IconData>{
+  '待付款': Icons.credit_card_outlined,
+  '備貨中': Icons.inventory_2_outlined,
+  '韓國處理中': Icons.store_outlined,
+  '空運回台中': Icons.flight_outlined,
+  '台灣配送中': Icons.local_shipping_outlined,
+  '已完成': Icons.check_circle_outline_rounded,
+};
+
+class _OrderStatusStrip extends StatelessWidget {
+  const _OrderStatusStrip({
+    required this.ordersAsync,
+    required this.onTap,
+  });
+  final AsyncValue<List<Order>> ordersAsync;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final orders = ordersAsync.valueOrNull ?? [];
+    final counts = <String, int>{
+      for (final s in kOrderStatuses) s: 0,
+    };
+    for (final o in orders) {
+      if (counts.containsKey(o.status)) {
+        counts[o.status] = counts[o.status]! + 1;
+      }
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: kOrderStatuses.map((status) {
+            final count = counts[status]!;
+            final active = count > 0;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _kStatusIcons[status] ?? Icons.circle_outlined,
+                      size: 22,
+                      color: active ? AppColors.primary : AppColors.textHint,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$count',
+                      style: AppTextStyles.labelLarge.copyWith(
+                        color: active ? AppColors.primary : AppColors.textHint,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      status,
+                      style: AppTextStyles.bodySmall.copyWith(
+                        fontSize: 9,
+                        color: active
+                            ? AppColors.textPrimary
+                            : AppColors.textHint,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Menu section
+// ---------------------------------------------------------------------------
+
+class _MenuSection extends StatelessWidget {
+  const _MenuSection({required this.items});
+  final List<_MenuItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: items.indexed.map((entry) {
+          final (i, item) = entry;
+          return Column(
+            children: [
+              item,
+              if (i < items.length - 1)
+                const Divider(height: 1, indent: 52),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _MenuItem extends StatelessWidget {
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.labelColor,
+  });
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? labelColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = labelColor ?? AppColors.textPrimary;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 18, color: AppColors.primary),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.textHint,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

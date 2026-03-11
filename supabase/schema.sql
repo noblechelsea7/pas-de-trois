@@ -35,6 +35,9 @@ create table profiles (
   full_name    text,
   phone        text,
   role         user_role not null default 'customer',
+  is_admin     boolean generated always as (role = 'admin') stored,
+  is_active    boolean not null default true,
+  admin_notes  text,
   points       integer not null default 0,
   created_at   timestamptz not null default now()
 );

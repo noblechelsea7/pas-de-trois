@@ -21,6 +21,9 @@ class UserProfile with _$UserProfile {
     @JsonKey(name: 'full_name') String? fullName,
     String? phone,
     @Default('customer') String role,
+    @JsonKey(name: 'is_admin') @Default(false) bool isAdmin,
+    @JsonKey(name: 'is_active') @Default(true) bool isActive,
+    @JsonKey(name: 'admin_notes') String? adminNotes,
     @Default(0) int points,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     required DateTime createdAt,

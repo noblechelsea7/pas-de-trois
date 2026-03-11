@@ -180,6 +180,16 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
 13. **Web 版非 ShellRoute 子頁面（如商品詳情）需自行在 Scaffold body 加入 `WebNavBarStandalone()`，不會自動繼承頂部導覽列**
 14. **循環依賴解法：將常數/路徑抽到獨立檔案（如 `route_paths.dart`），再由主檔用 `export` 重新匯出，讓既有 import 不受影響**
 
+## 已知技術債
+
+> MVP 階段暫緩補齊，優先完成功能開發。
+
+- **cart / orders 缺 data 層** — 目前邏輯在 provider 直接呼叫 Supabase，未經過 datasource / repository / interface 分層
+- **admin 缺 domain models** — 系統設定目前以 `Map<String, String>` 傳遞，應抽出 `AdminSetting` 等 model
+- **wishlist 是空殼** — 僅有 `index.dart`，data / domain / presentation 層尚未實作
+- **各 feature 缺 `presentation/widgets/` 資料夾** — 可重用子元件目前直接寫在 screen 檔案內，未拆分
+- **Profile 子路由行動版 NavBar 問題** — `/profile/edit`、`/profile/address` 嵌套在 `StatefulShellBranch` 內，行動版子頁面會顯示底部 NavBar。Web 版正常，行動版上線前需改為獨立頂層路由（加自己的 Scaffold）或動態隱藏 BottomNavigationBar
+
 ## Platform Notes
 
 - **Android:** `android/app/src/main/kotlin/com/koreanproxy/korea_proxy/MainActivity.kt`

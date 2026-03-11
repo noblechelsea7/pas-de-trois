@@ -10,6 +10,53 @@ export '../../domain/models/order.dart';
 
 part 'order_providers.g.dart';
 
+// ---------------------------------------------------------------------------
+// Address mutations (plain async helpers — called from UI, invalidate provider)
+// ---------------------------------------------------------------------------
+
+Future<void> upsertAddress({
+  String? id,
+  required String userId,
+  required String label,
+  required String recipientName,
+  required String phone,
+  required String address,
+  required bool isDefault,
+}) async {
+  final client = Supabase.instance.client;
+  if (isDefault) {
+    await client
+        .from('addresses')
+        .update({'is_default': false})
+        .eq('user_id', userId);
+  }
+  if (id == null) {
+    await client.from('addresses').insert({
+      'user_id': userId,
+      'label': label,
+      'recipient_name': recipientName,
+      'phone': phone,
+      'address': address,
+      'is_default': isDefault,
+    });
+  } else {
+    await client.from('addresses').update({
+      'label': label,
+      'recipient_name': recipientName,
+      'phone': phone,
+      'address': address,
+      'is_default': isDefault,
+    }).eq('id', id);
+  }
+}
+
+Future<void> deleteAddress(String addressId) async {
+  await Supabase.instance.client
+      .from('addresses')
+      .delete()
+      .eq('id', addressId);
+}
+
 @riverpod
 Future<List<Address>> userAddresses(Ref ref) async {
   final client = Supabase.instance.client;

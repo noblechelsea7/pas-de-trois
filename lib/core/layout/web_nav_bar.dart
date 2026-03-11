@@ -9,6 +9,7 @@ import '../constants/app_constants.dart';
 import '../router/route_paths.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/cart/presentation/providers/cart_providers.dart';
 import '../../features/products/domain/models/category.dart';
 import '../../features/products/presentation/providers/product_providers.dart';
@@ -86,6 +87,7 @@ class WebNavBar extends ConsumerWidget {
                       _MemberMenuButton(
                         onGoProfile: () => navigationShell.goBranch(4),
                         onGoOrders: () => context.go(RoutePaths.orders),
+                        onGoAdmin: () => context.go(RoutePaths.adminDashboard),
                         onGoLogin: () => context.go(RoutePaths.login),
                         onLogout: () async {
                           await Supabase.instance.client.auth.signOut();
@@ -262,12 +264,14 @@ class _MemberMenuButton extends ConsumerStatefulWidget {
   const _MemberMenuButton({
     required this.onGoProfile,
     required this.onGoOrders,
+    required this.onGoAdmin,
     required this.onGoLogin,
     required this.onLogout,
   });
 
   final VoidCallback onGoProfile;
   final VoidCallback onGoOrders;
+  final VoidCallback onGoAdmin;
   final VoidCallback onGoLogin;
   final Future<void> Function() onLogout;
 
@@ -306,6 +310,11 @@ class _MemberMenuButtonState extends ConsumerState<_MemberMenuButton> {
     final pos = box.localToGlobal(Offset.zero);
     final size = box.size;
 
+    final isAdmin = ref
+        .read(userProfileProvider)
+        .valueOrNull
+        ?.isAdmin ?? false;
+
     _entry = OverlayEntry(
       builder: (overlayCtx) {
         final sw = MediaQuery.of(overlayCtx).size.width;
@@ -324,6 +333,15 @@ class _MemberMenuButtonState extends ConsumerState<_MemberMenuButton> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (isAdmin) ...[
+                      _HoverMenuItem(
+                        icon: Icons.admin_panel_settings_outlined,
+                        label: '管理後台',
+                        color: AppColors.primary,
+                        onTap: () { _hide(); widget.onGoAdmin(); },
+                      ),
+                      const Divider(height: 1, thickness: 1, color: Color(0xFFEEEEEE)),
+                    ],
                     _HoverMenuItem(
                       icon: Icons.receipt_long_outlined,
                       label: '我的訂單',
@@ -558,6 +576,7 @@ class WebNavBarStandalone extends ConsumerWidget {
                   _MemberMenuButton(
                     onGoProfile: () => context.go(RoutePaths.profile),
                     onGoOrders: () => context.go(RoutePaths.orders),
+                    onGoAdmin: () => context.go(RoutePaths.adminDashboard),
                     onGoLogin: () => context.go(RoutePaths.login),
                     onLogout: () async {
                       await Supabase.instance.client.auth.signOut();

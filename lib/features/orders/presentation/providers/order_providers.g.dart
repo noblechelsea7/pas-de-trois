@@ -40,7 +40,7 @@ final userOrdersProvider = AutoDisposeFutureProvider<List<Order>>.internal(
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef UserOrdersRef = AutoDisposeFutureProviderRef<List<Order>>;
-String _$orderDetailHash() => r'48b056bbe774dfb92e0d7c13cbf4d15c79dded5a';
+String _$orderDetailHash() => r'403b773eb6e5fd4596ccad4736db75b4702cb196';
 
 /// Copied from Dart SDK
 class _SystemHash {

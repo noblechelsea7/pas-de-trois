@@ -27,6 +27,12 @@ mixin _$UserProfile {
   String? get fullName => throw _privateConstructorUsedError;
   String? get phone => throw _privateConstructorUsedError;
   String get role => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_admin')
+  bool get isAdmin => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_active')
+  bool get isActive => throw _privateConstructorUsedError;
+  @JsonKey(name: 'admin_notes')
+  String? get adminNotes => throw _privateConstructorUsedError;
   int get points => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
   DateTime get createdAt => throw _privateConstructorUsedError;
@@ -54,6 +60,9 @@ abstract class $UserProfileCopyWith<$Res> {
     @JsonKey(name: 'full_name') String? fullName,
     String? phone,
     String role,
+    @JsonKey(name: 'is_admin') bool isAdmin,
+    @JsonKey(name: 'is_active') bool isActive,
+    @JsonKey(name: 'admin_notes') String? adminNotes,
     int points,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     DateTime createdAt,
@@ -80,6 +89,9 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
     Object? fullName = freezed,
     Object? phone = freezed,
     Object? role = null,
+    Object? isAdmin = null,
+    Object? isActive = null,
+    Object? adminNotes = freezed,
     Object? points = null,
     Object? createdAt = null,
   }) {
@@ -105,6 +117,18 @@ class _$UserProfileCopyWithImpl<$Res, $Val extends UserProfile>
                 ? _value.role
                 : role // ignore: cast_nullable_to_non_nullable
                       as String,
+            isAdmin: null == isAdmin
+                ? _value.isAdmin
+                : isAdmin // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            isActive: null == isActive
+                ? _value.isActive
+                : isActive // ignore: cast_nullable_to_non_nullable
+                      as bool,
+            adminNotes: freezed == adminNotes
+                ? _value.adminNotes
+                : adminNotes // ignore: cast_nullable_to_non_nullable
+                      as String?,
             points: null == points
                 ? _value.points
                 : points // ignore: cast_nullable_to_non_nullable
@@ -134,6 +158,9 @@ abstract class _$$UserProfileImplCopyWith<$Res>
     @JsonKey(name: 'full_name') String? fullName,
     String? phone,
     String role,
+    @JsonKey(name: 'is_admin') bool isAdmin,
+    @JsonKey(name: 'is_active') bool isActive,
+    @JsonKey(name: 'admin_notes') String? adminNotes,
     int points,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     DateTime createdAt,
@@ -159,6 +186,9 @@ class __$$UserProfileImplCopyWithImpl<$Res>
     Object? fullName = freezed,
     Object? phone = freezed,
     Object? role = null,
+    Object? isAdmin = null,
+    Object? isActive = null,
+    Object? adminNotes = freezed,
     Object? points = null,
     Object? createdAt = null,
   }) {
@@ -184,6 +214,18 @@ class __$$UserProfileImplCopyWithImpl<$Res>
             ? _value.role
             : role // ignore: cast_nullable_to_non_nullable
                   as String,
+        isAdmin: null == isAdmin
+            ? _value.isAdmin
+            : isAdmin // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        isActive: null == isActive
+            ? _value.isActive
+            : isActive // ignore: cast_nullable_to_non_nullable
+                  as bool,
+        adminNotes: freezed == adminNotes
+            ? _value.adminNotes
+            : adminNotes // ignore: cast_nullable_to_non_nullable
+                  as String?,
         points: null == points
             ? _value.points
             : points // ignore: cast_nullable_to_non_nullable
@@ -206,6 +248,9 @@ class _$UserProfileImpl implements _UserProfile {
     @JsonKey(name: 'full_name') this.fullName,
     this.phone,
     this.role = 'customer',
+    @JsonKey(name: 'is_admin') this.isAdmin = false,
+    @JsonKey(name: 'is_active') this.isActive = true,
+    @JsonKey(name: 'admin_notes') this.adminNotes,
     this.points = 0,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     required this.createdAt,
@@ -227,6 +272,15 @@ class _$UserProfileImpl implements _UserProfile {
   @JsonKey()
   final String role;
   @override
+  @JsonKey(name: 'is_admin')
+  final bool isAdmin;
+  @override
+  @JsonKey(name: 'is_active')
+  final bool isActive;
+  @override
+  @JsonKey(name: 'admin_notes')
+  final String? adminNotes;
+  @override
   @JsonKey()
   final int points;
   @override
@@ -235,7 +289,7 @@ class _$UserProfileImpl implements _UserProfile {
 
   @override
   String toString() {
-    return 'UserProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, role: $role, points: $points, createdAt: $createdAt)';
+    return 'UserProfile(id: $id, email: $email, fullName: $fullName, phone: $phone, role: $role, isAdmin: $isAdmin, isActive: $isActive, adminNotes: $adminNotes, points: $points, createdAt: $createdAt)';
   }
 
   @override
@@ -249,6 +303,11 @@ class _$UserProfileImpl implements _UserProfile {
                 other.fullName == fullName) &&
             (identical(other.phone, phone) || other.phone == phone) &&
             (identical(other.role, role) || other.role == role) &&
+            (identical(other.isAdmin, isAdmin) || other.isAdmin == isAdmin) &&
+            (identical(other.isActive, isActive) ||
+                other.isActive == isActive) &&
+            (identical(other.adminNotes, adminNotes) ||
+                other.adminNotes == adminNotes) &&
             (identical(other.points, points) || other.points == points) &&
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt));
@@ -263,6 +322,9 @@ class _$UserProfileImpl implements _UserProfile {
     fullName,
     phone,
     role,
+    isAdmin,
+    isActive,
+    adminNotes,
     points,
     createdAt,
   );
@@ -288,6 +350,9 @@ abstract class _UserProfile implements UserProfile {
     @JsonKey(name: 'full_name') final String? fullName,
     final String? phone,
     final String role,
+    @JsonKey(name: 'is_admin') final bool isAdmin,
+    @JsonKey(name: 'is_active') final bool isActive,
+    @JsonKey(name: 'admin_notes') final String? adminNotes,
     final int points,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     required final DateTime createdAt,
@@ -307,6 +372,15 @@ abstract class _UserProfile implements UserProfile {
   String? get phone;
   @override
   String get role;
+  @override
+  @JsonKey(name: 'is_admin')
+  bool get isAdmin;
+  @override
+  @JsonKey(name: 'is_active')
+  bool get isActive;
+  @override
+  @JsonKey(name: 'admin_notes')
+  String? get adminNotes;
   @override
   int get points;
   @override

@@ -11,12 +11,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/profile_address_screen.dart';
+import '../../features/auth/presentation/screens/profile_edit_screen.dart';
 import '../../features/auth/presentation/screens/profile_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
 import '../layout/web_nav_bar.dart';
 import '../theme/app_theme.dart';
 import '../utils/responsive.dart';
 import 'route_paths.dart';
+import '../../features/admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../features/admin/presentation/screens/admin_orders_screen.dart';
+import '../../features/admin/presentation/screens/admin_products_screen.dart';
+import '../../features/admin/presentation/screens/admin_members_screen.dart';
+import '../../features/admin/presentation/screens/admin_settings_screen.dart';
+import '../../features/admin/presentation/screens/admin_shell.dart';
+import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/cart/presentation/providers/cart_providers.dart';
 import '../../features/cart/presentation/screens/cart_screen.dart';
 import '../../features/orders/presentation/screens/checkout_screen.dart';
@@ -246,7 +255,7 @@ GoRouter appRouter(Ref ref) {
     initialLocation: RoutePaths.home,
     debugLogDiagnostics: false,
     refreshListenable: refreshListenable,
-    redirect: (context, state) {
+    redirect: (context, state) async {
       final isLoggedIn = client.auth.currentSession != null;
       final loc = state.matchedLocation;
 
@@ -265,6 +274,14 @@ GoRouter appRouter(Ref ref) {
       final isProtected = _protectedPrefixes.any((p) => loc.startsWith(p));
       if (!isLoggedIn && isProtected) {
         return '${RoutePaths.login}?redirect=${Uri.encodeComponent(loc)}';
+      }
+
+      // Admin guard — await profile to avoid race condition
+      if (isLoggedIn && loc.startsWith('/admin')) {
+        final profile = await ref.read(userProfileProvider.future);
+        if (profile == null || !profile.isAdmin) {
+          return RoutePaths.home;
+        }
       }
 
       return null;
@@ -330,6 +347,20 @@ GoRouter appRouter(Ref ref) {
                 path: RoutePaths.profile,
                 name: RouteNames.profile,
                 builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'edit',
+                    name: RouteNames.profileEdit,
+                    builder: (context, state) =>
+                        const ProfileEditScreen(),
+                  ),
+                  GoRoute(
+                    path: 'address',
+                    name: RouteNames.profileAddress,
+                    builder: (context, state) =>
+                        const ProfileAddressScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -437,66 +468,69 @@ GoRouter appRouter(Ref ref) {
       ),
 
       // ---------------------------------------------------------------
-      // Admin routes
+      // Admin routes — wrapped in AdminShell (sidebar + content)
       // ---------------------------------------------------------------
-      GoRoute(
-        path: RoutePaths.adminDashboard,
-        name: RouteNames.adminDashboard,
-        builder: (context, state) => const _PlaceholderScreen(title: '後台首頁'),
+      ShellRoute(
+        builder: (context, state, child) => AdminShell(child: child),
         routes: [
           GoRoute(
-            path: 'products',
-            name: RouteNames.adminProducts,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '商品管理'),
+            path: RoutePaths.adminDashboard,
+            name: RouteNames.adminDashboard,
+            builder: (context, state) => const AdminDashboardScreen(),
             routes: [
               GoRoute(
-                path: ':productId',
-                name: RouteNames.adminProductEdit,
-                builder: (context, state) => _PlaceholderScreen(
-                  title: '編輯商品 ${state.pathParameters['productId']}',
-                ),
+                path: 'products',
+                name: RouteNames.adminProducts,
+                builder: (context, state) => const AdminProductsScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':productId',
+                    name: RouteNames.adminProductEdit,
+                    builder: (context, state) => _PlaceholderScreen(
+                      title: '編輯商品 ${state.pathParameters['productId']}',
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          GoRoute(
-            path: 'orders',
-            name: RouteNames.adminOrders,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '訂單管理'),
-            routes: [
               GoRoute(
-                path: ':orderId',
-                name: RouteNames.adminOrderDetail,
-                builder: (context, state) => _PlaceholderScreen(
-                  title: '訂單詳情 ${state.pathParameters['orderId']}',
-                ),
+                path: 'orders',
+                name: RouteNames.adminOrders,
+                builder: (context, state) => const AdminOrdersScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':orderId',
+                    name: RouteNames.adminOrderDetail,
+                    builder: (context, state) => _PlaceholderScreen(
+                      title: '訂單詳情 ${state.pathParameters['orderId']}',
+                    ),
+                  ),
+                ],
+              ),
+              GoRoute(
+                path: 'settings',
+                name: RouteNames.adminSettings,
+                builder: (context, state) =>
+                    const AdminSettingsScreen(),
+              ),
+              GoRoute(
+                path: 'members',
+                name: RouteNames.adminMembers,
+                builder: (context, state) =>
+                    const AdminMembersScreen(),
+              ),
+              GoRoute(
+                path: 'announcements',
+                name: RouteNames.adminAnnouncements,
+                builder: (context, state) =>
+                    const _PlaceholderScreen(title: '公告管理'),
+              ),
+              GoRoute(
+                path: 'pages',
+                name: RouteNames.adminPages,
+                builder: (context, state) =>
+                    const _PlaceholderScreen(title: '說明頁管理'),
               ),
             ],
-          ),
-          GoRoute(
-            path: 'settings',
-            name: RouteNames.adminSettings,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '系統設定'),
-          ),
-          GoRoute(
-            path: 'members',
-            name: RouteNames.adminMembers,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '會員管理'),
-          ),
-          GoRoute(
-            path: 'announcements',
-            name: RouteNames.adminAnnouncements,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '公告管理'),
-          ),
-          GoRoute(
-            path: 'pages',
-            name: RouteNames.adminPages,
-            builder: (context, state) =>
-                const _PlaceholderScreen(title: '說明頁管理'),
           ),
         ],
       ),

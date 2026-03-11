@@ -9,6 +9,8 @@ abstract final class RoutePaths {
   static const String cart = '/cart';
   static const String wishlist = '/wishlist';
   static const String profile = '/profile';
+  static const String profileEdit = '/profile/edit';
+  static const String profileAddress = '/profile/address';
 
   // Auth
   static const String login = '/login';
@@ -52,6 +54,8 @@ abstract final class RouteNames {
   static const String cart = 'cart';
   static const String wishlist = 'wishlist';
   static const String profile = 'profile';
+  static const String profileEdit = 'profileEdit';
+  static const String profileAddress = 'profileAddress';
   static const String login = 'login';
   static const String register = 'register';
   static const String forgotPassword = 'forgotPassword';
