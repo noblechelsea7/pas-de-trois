@@ -91,7 +91,9 @@ class _WishlistHeartButtonState extends ConsumerState<WishlistHeartButton>
       child: Icon(
         wished ? Icons.favorite_rounded : Icons.favorite_border_rounded,
         size: widget.size,
-        color: wished ? colorScheme.error : Colors.white,
+        color: wished
+            ? colorScheme.error
+            : (widget.withBackground ? Colors.white : colorScheme.onSurfaceVariant),
       ),
     );
 
