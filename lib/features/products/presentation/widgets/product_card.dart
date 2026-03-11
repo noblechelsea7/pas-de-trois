@@ -7,6 +7,7 @@ import '../../../../core/constants/shipping_constants.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/price_calculator.dart';
 import '../../../../core/utils/shipping_calculator.dart';
+import '../../../../shared/widgets/wishlist_heart_button.dart';
 import '../../domain/models/product.dart';
 import '../providers/product_providers.dart';
 
@@ -37,20 +38,30 @@ class ProductCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Image — 3:4 portrait, always fills card width
-          AspectRatio(
-            aspectRatio: 3 / 4,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: imageUrl != null
-                  ? CachedNetworkImage(
-                      imageUrl: imageUrl,
-                      fit: BoxFit.cover,
-                      placeholder: (_, _) => Container(color: AppColors.surface),
-                      errorWidget: (_, _, _) => _imagePlaceholder(),
-                    )
-                  : _imagePlaceholder(),
-            ),
+          // Image — 3:4 portrait with wishlist heart overlay
+          Stack(
+            children: [
+              AspectRatio(
+                aspectRatio: 3 / 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: imageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (_, _) =>
+                              Container(color: AppColors.surface),
+                          errorWidget: (_, _, _) => _imagePlaceholder(),
+                        )
+                      : _imagePlaceholder(),
+                ),
+              ),
+              Positioned(
+                top: 6,
+                right: 6,
+                child: WishlistHeartButton(productId: product.id),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(

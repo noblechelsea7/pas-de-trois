@@ -26,6 +26,7 @@ import '../../features/admin/presentation/screens/admin_members_screen.dart';
 import '../../features/admin/presentation/screens/admin_settings_screen.dart';
 import '../../features/admin/presentation/screens/admin_shell.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/wishlist/presentation/screens/wishlist_screen.dart';
 import '../../features/cart/presentation/providers/cart_providers.dart';
 import '../../features/cart/presentation/screens/cart_screen.dart';
 import '../../features/orders/presentation/screens/checkout_screen.dart';
@@ -323,8 +324,7 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.wishlist,
                 name: RouteNames.wishlist,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: '收藏清單'),
+                builder: (context, state) => const WishlistScreen(),
               ),
             ],
           ),

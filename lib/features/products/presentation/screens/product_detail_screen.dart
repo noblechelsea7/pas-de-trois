@@ -9,6 +9,7 @@ import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/price_calculator.dart';
 import '../../../../core/utils/shipping_calculator.dart';
+import '../../../../shared/widgets/wishlist_heart_button.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../domain/models/product.dart';
 import '../providers/product_providers.dart';
@@ -104,8 +105,24 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name
-                Text(product.name, style: AppTextStyles.headlineMedium),
+                // Name + wishlist heart
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.name,
+                        style: AppTextStyles.headlineMedium,
+                      ),
+                    ),
+                    WishlistHeartButton(
+                      productId: product.id,
+                      size: 24,
+                      withBackground: false,
+                      padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 12),
 
                 // Final price only
