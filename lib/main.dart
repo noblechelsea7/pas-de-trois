@@ -28,6 +28,16 @@ Future<void> main() async {
   runApp(const ProviderScope(child: PasDeTroisApp()));
 }
 
+class _NoScrollbarBehavior extends ScrollBehavior {
+  const _NoScrollbarBehavior();
+
+  @override
+  Widget buildScrollbar(
+      BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+}
+
 class PasDeTroisApp extends ConsumerWidget {
   const PasDeTroisApp({super.key});
 
@@ -40,6 +50,7 @@ class PasDeTroisApp extends ConsumerWidget {
       theme: AppTheme.lightTheme,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _NoScrollbarBehavior(),
     );
   }
 }
