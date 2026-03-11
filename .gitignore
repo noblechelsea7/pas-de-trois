@@ -48,9 +48,12 @@ chromedriver-win64/
 # Flutter plugins cache
 .flutter-plugins
 
-# Environment variables
+# Environment variables (never commit real credentials)
 .env
 .env.*
+.env.json
+# But DO track the example template
+!.env.example
 
 # Supabase local temp files
 supabase/.temp/

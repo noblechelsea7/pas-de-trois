@@ -30,8 +30,6 @@ dependencies:
   # Image
   cached_network_image: ^3.4.1
 
-  # Environment
-  flutter_dotenv: ^5.2.1
   intl: ^0.20.2
 
 dev_dependencies:
@@ -52,7 +50,6 @@ flutter:
   uses-material-design: true
 
   assets:
-    - .env
     - assets/images/
 
   # fonts:
