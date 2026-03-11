@@ -32,16 +32,21 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
 
+        // ── Stats bar ──
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _StatsBar(ordersAsync: ordersAsync),
+          ),
+        ),
+
         // ── Order status strip ──
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
-            child: Transform.translate(
-              offset: const Offset(0, -20),
-              child: _OrderStatusStrip(
-                ordersAsync: ordersAsync,
-                onTap: () => context.push(RoutePaths.orders),
-              ),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: _OrderStatusStrip(
+              ordersAsync: ordersAsync,
+              onTap: () => context.push(RoutePaths.orders),
             ),
           ),
         ),
@@ -186,6 +191,114 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Stats bar  (總消費 | 訂單數 | 待處理)
+// ---------------------------------------------------------------------------
+
+const _kPendingStatuses = {'待付款', '備貨中', '韓國處理中'};
+
+class _StatsBar extends StatelessWidget {
+  const _StatsBar({required this.ordersAsync});
+  final AsyncValue<List<Order>> ordersAsync;
+
+  @override
+  Widget build(BuildContext context) {
+    final orders = ordersAsync.valueOrNull ?? [];
+
+    final totalSpend = orders
+        .where((o) => o.status != 'cancelled')
+        .fold<int>(0, (sum, o) => sum + o.totalAmount);
+    final totalCount = orders.length;
+    final pendingCount = orders
+        .where((o) => _kPendingStatuses.contains(o.status))
+        .length;
+
+    final formattedSpend = _formatAmount(totalSpend);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: IntrinsicHeight(
+        child: Row(
+          children: [
+            _StatCell(label: '總消費', value: 'NT\$$formattedSpend'),
+            _VerticalDivider(),
+            _StatCell(label: '訂單數', value: '$totalCount筆'),
+            _VerticalDivider(),
+            _StatCell(label: '待處理', value: '$pendingCount筆'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatAmount(int amount) {
+    final s = amount.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
+  }
+}
+
+class _StatCell extends StatelessWidget {
+  const _StatCell({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              style: AppTextStyles.titleMedium.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              label,
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VerticalDivider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 1,
+      margin: const EdgeInsets.symmetric(vertical: 12),
+      color: AppColors.border,
     );
   }
 }
