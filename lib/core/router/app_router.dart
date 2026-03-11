@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/profile_address_screen.dart';
@@ -301,8 +302,7 @@ GoRouter appRouter(Ref ref) {
               GoRoute(
                 path: RoutePaths.home,
                 name: RouteNames.home,
-                builder: (context, state) =>
-                    const _PlaceholderScreen(title: '首頁'),
+                builder: (context, state) => const HomeScreen(),
               ),
             ],
           ),
