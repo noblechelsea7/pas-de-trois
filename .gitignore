@@ -48,6 +48,9 @@ chromedriver-win64/
 # Flutter plugins cache
 .flutter-plugins
 
+# Claude Code local settings
+.claude/
+
 # Environment variables (never commit real credentials)
 .env
 .env.*
