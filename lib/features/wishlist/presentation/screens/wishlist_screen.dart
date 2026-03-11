@@ -13,23 +13,29 @@ import '../../../products/domain/models/product.dart';
 import '../../../products/presentation/providers/product_providers.dart';
 import '../providers/wishlist_providers.dart';
 
-class WishlistScreen extends ConsumerWidget {
+class WishlistScreen extends ConsumerStatefulWidget {
   const WishlistScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends ConsumerState<WishlistScreen> {
+  final _scrollCtrl = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final productsAsync = ref.watch(wishlistProductsProvider);
 
     return CustomScrollView(
+      controller: _scrollCtrl,
       slivers: [
-        SliverAppBar(
-          title: const Text('收藏清單'),
-          pinned: true,
-          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-          foregroundColor: Theme.of(context).colorScheme.onSurface,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-        ),
         productsAsync.when(
           loading: () => const SliverFillRemaining(
             child: Center(child: CircularProgressIndicator()),
