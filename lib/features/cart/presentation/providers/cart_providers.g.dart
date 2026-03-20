@@ -6,10 +6,11 @@ part of 'cart_providers.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$cartItemsHash() => r'4ee8f1ce69dcf7b6ce7a5e39f7bfa215e625c299';
+String _$cartItemsHash() => r'89c3c5923a36d423602ed6f1c49f55acdb101101';
 
-/// In-memory cart: cartKey → CartItem.
-/// The key uniquely identifies a product+variant combination.
+/// In-memory + Supabase-backed cart.
+/// - Logged-in users: synced to Supabase on every mutation; loaded on startup.
+/// - Guest users: in-memory only; merged to Supabase on login.
 ///
 /// Copied from [CartItems].
 @ProviderFor(CartItems)

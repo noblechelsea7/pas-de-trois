@@ -253,12 +253,13 @@ create policy "wishlist_own"
 -- ============================================================
 
 create table cart_items (
-  id          uuid primary key default uuid_generate_v4(),
-  user_id     uuid not null references profiles(id) on delete cascade,
-  product_id  uuid not null references products(id) on delete cascade,
-  quantity    integer not null default 1 check (quantity >= 1),
-  created_at  timestamptz not null default now(),
-  unique (user_id, product_id)
+  id            uuid primary key default uuid_generate_v4(),
+  user_id       uuid not null references profiles(id) on delete cascade,
+  product_id    uuid not null references products(id) on delete cascade,
+  quantity      integer not null default 1 check (quantity >= 1),
+  variant_label text not null default '',
+  created_at    timestamptz not null default now(),
+  unique (user_id, product_id, variant_label)
 );
 
 alter table cart_items enable row level security;
