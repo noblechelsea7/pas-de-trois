@@ -189,6 +189,19 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
     - `*.g.dart`
     - `*.gr.dart`
 
+## Python 路徑
+
+Windows 上執行 Python 腳本（包含 UI/UX Pro Max skill）請使用：
+
+```bash
+PYTHONIOENCODING=utf-8 "C:/Users/CHELSEA/AppData/Local/Programs/Python/Python312/python.exe" <script> <args>
+```
+
+不要使用 `python3` 或 `python` 指令，會呼叫到 Windows Store stub（exit code 49）。
+`PYTHONIOENCODING=utf-8` 必須加上，否則輸出特殊字元時會發生 cp950 編碼錯誤。
+
+---
+
 ## 已知技術債
 
 > MVP 階段暫緩補齊，優先完成功能開發。
