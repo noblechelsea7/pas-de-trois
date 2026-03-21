@@ -45,10 +45,10 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           title: _SearchBar(
             controller: _searchController,
             onChanged: (q) =>
-                ref.read(searchQueryProvider.notifier).state = q,
+                ref.read(searchQueryProvider.notifier).set(q),
             onClear: () {
               _searchController.clear();
-              ref.read(searchQueryProvider.notifier).state = '';
+              ref.read(searchQueryProvider.notifier).set('');
             },
           ),
         ),
@@ -63,7 +63,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 categories: cats,
                 selectedId: selectedCategory,
                 onSelected: (id) =>
-                    ref.read(selectedCategoryProvider.notifier).state = id,
+                    ref.read(selectedCategoryProvider.notifier).set(id),
               ),
             ),
           ),

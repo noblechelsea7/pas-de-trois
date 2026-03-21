@@ -353,31 +353,33 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         // Shipping method
                         _SectionCard(
                           title: '配送方式',
-                          child: Column(
-                            children: _ShippingMethod.values.map((method) {
-                              final feeLabel =
-                                  isFreeShipping ? '免運' : 'NT\$ ${method.baseFee}';
-                              return RadioListTile<_ShippingMethod>(
-                                value: method,
-                                groupValue: _shippingMethod,
-                                onChanged: (v) =>
-                                    setState(() => _shippingMethod = v!),
-                                activeColor: AppColors.primary,
-                                contentPadding: EdgeInsets.zero,
-                                title: Text(
-                                  method.label,
-                                  style: AppTextStyles.bodyMedium,
-                                ),
-                                subtitle: Text(
-                                  feeLabel,
-                                  style: AppTextStyles.bodySmall.copyWith(
-                                    color: isFreeShipping
-                                        ? AppColors.success
-                                        : AppColors.textSecondary,
+                          child: RadioGroup<_ShippingMethod>(
+                            groupValue: _shippingMethod,
+                            onChanged: (v) =>
+                                setState(() => _shippingMethod = v!),
+                            child: Column(
+                              children: _ShippingMethod.values.map((method) {
+                                final feeLabel =
+                                    isFreeShipping ? '免運' : 'NT\$ ${method.baseFee}';
+                                return RadioListTile<_ShippingMethod>(
+                                  value: method,
+                                  activeColor: AppColors.primary,
+                                  contentPadding: EdgeInsets.zero,
+                                  title: Text(
+                                    method.label,
+                                    style: AppTextStyles.bodyMedium,
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  subtitle: Text(
+                                    feeLabel,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: isFreeShipping
+                                          ? AppColors.success
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -745,31 +747,32 @@ class _AddressList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: addresses.map((addr) {
-        final isSelected = addr.id == selectedId;
-        return InkWell(
-          onTap: () => onSelected(addr.id),
-          borderRadius: BorderRadius.circular(4),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            margin: const EdgeInsets.only(bottom: 8),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: isSelected ? AppColors.primary : AppColors.border,
-                width: isSelected ? 1.5 : 1,
-              ),
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Row(
-              children: [
-                Radio<String>(
-                  value: addr.id,
-                  groupValue: selectedId,
-                  onChanged: (v) => onSelected(v!),
-                  activeColor: AppColors.primary,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    return RadioGroup<String>(
+      groupValue: selectedId,
+      onChanged: (v) { if (v != null) onSelected(v); },
+      child: Column(
+        children: addresses.map((addr) {
+          final isSelected = addr.id == selectedId;
+          return InkWell(
+            onTap: () => onSelected(addr.id),
+            borderRadius: BorderRadius.circular(4),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              margin: const EdgeInsets.only(bottom: 8),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                  width: isSelected ? 1.5 : 1,
                 ),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Radio<String>(
+                    value: addr.id,
+                    activeColor: AppColors.primary,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -820,7 +823,8 @@ class _AddressList extends StatelessWidget {
             ),
           ),
         );
-      }).toList(),
+        }).toList(),
+      ),
     );
   }
 }
@@ -876,7 +880,7 @@ class _AddressForm extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<String>(
-            value: selectedCity,
+            initialValue: selectedCity,
             decoration: const InputDecoration(labelText: '縣市'),
             items: _kCities
                 .map(

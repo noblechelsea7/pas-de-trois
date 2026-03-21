@@ -37,11 +37,24 @@ Future<List<Category>> categories(Ref ref) =>
     ref.read(productRepositoryProvider).getCategories();
 
 // ---------------------------------------------------------------------------
-// Filter state (not code-generated — use plain StateProvider for simplicity)
+// Filter state
 // ---------------------------------------------------------------------------
 
-final selectedCategoryProvider = StateProvider<String?>((ref) => null);
-final searchQueryProvider = StateProvider<String>((ref) => '');
+@riverpod
+class SelectedCategory extends _$SelectedCategory {
+  @override
+  String? build() => null;
+
+  void set(String? id) => state = id;
+}
+
+@riverpod
+class SearchQuery extends _$SearchQuery {
+  @override
+  String build() => '';
+
+  void set(String query) => state = query;
+}
 
 // ---------------------------------------------------------------------------
 // Products list (filtered by category + search)

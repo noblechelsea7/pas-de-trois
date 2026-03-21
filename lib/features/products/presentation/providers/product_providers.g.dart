@@ -216,6 +216,38 @@ class _ProductByIdProviderElement
   String get productId => (origin as ProductByIdProvider).productId;
 }
 
+String _$selectedCategoryHash() => r'd0cd9f325c5c7b67fccc7833e310feac8e9026ab';
+
+/// See also [SelectedCategory].
+@ProviderFor(SelectedCategory)
+final selectedCategoryProvider =
+    AutoDisposeNotifierProvider<SelectedCategory, String?>.internal(
+      SelectedCategory.new,
+      name: r'selectedCategoryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$selectedCategoryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SelectedCategory = AutoDisposeNotifier<String?>;
+String _$searchQueryHash() => r'2ab221c441fd042c8cbf58b17e7e766363f36b6f';
+
+/// See also [SearchQuery].
+@ProviderFor(SearchQuery)
+final searchQueryProvider =
+    AutoDisposeNotifierProvider<SearchQuery, String>.internal(
+      SearchQuery.new,
+      name: r'searchQueryProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$searchQueryHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+typedef _$SearchQuery = AutoDisposeNotifier<String>;
 String _$selectedVariantsHash() => r'84cc04ef25b777369c2bbd6d70aea25695b83e28';
 
 abstract class _$SelectedVariants

@@ -69,8 +69,7 @@ class WebNavBar extends ConsumerWidget {
                             selectedCategoryId: selectedCategoryId,
                             onHome: () => navigationShell.goBranch(0),
                             onCategory: (cat) {
-                              ref.read(selectedCategoryProvider.notifier).state =
-                                  cat?.id;
+                              ref.read(selectedCategoryProvider.notifier).set(cat?.id);
                               navigationShell.goBranch(1);
                             },
                           ),
@@ -558,8 +557,7 @@ class WebNavBarStandalone extends ConsumerWidget {
                         selectedCategoryId: selectedCategoryId,
                         onHome: () => context.go(RoutePaths.home),
                         onCategory: (cat) {
-                          ref.read(selectedCategoryProvider.notifier).state =
-                              cat?.id;
+                          ref.read(selectedCategoryProvider.notifier).set(cat?.id);
                           context.go(RoutePaths.products);
                         },
                       ),
