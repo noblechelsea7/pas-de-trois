@@ -65,25 +65,37 @@ class ProductCard extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          if (product.brandName != null && product.brandName!.isNotEmpty)
-            Text(
-              product.brandName!.toUpperCase(),
-              style: AppTextStyles.bodySmall.copyWith(
-                color: AppColors.textSecondary,
-                letterSpacing: 1.0,
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(0, 10, 0, 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                if (product.brandName != null &&
+                    product.brandName!.isNotEmpty) ...[
+                  Text(
+                    product.brandName!.toUpperCase(),
+                    style: AppTextStyles.bodySmall.copyWith(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 1.2,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                ],
+                Text(
+                  product.name,
+                  style: AppTextStyles.titleMedium.copyWith(fontSize: 13),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'NT\$ $displayPrice',
+                  style: AppTextStyles.priceSmall,
+                ),
+              ],
             ),
-          Text(
-            product.name,
-            style: AppTextStyles.titleMedium,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'NT\$ $displayPrice',
-            style: AppTextStyles.priceSmall,
           ),
         ],
       ),

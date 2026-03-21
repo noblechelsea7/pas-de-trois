@@ -112,7 +112,7 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
                 const spacing = 8.0;
                 // Web: 24px L+R padding; Mobile: 16px L+R padding
                 final hPad = isWeb ? 24.0 : 16.0;
-                const textAreaHeight = 60.0; // name (2 lines) + price
+                const textAreaHeight = 96.0; // brand + name (2 lines) + price + padding
 
                 final innerWidth =
                     constraints.crossAxisExtent - hPad * 2;
