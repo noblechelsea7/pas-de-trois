@@ -91,7 +91,11 @@ lib/
         providers/
     cart/
       data/
+        datasources/     # SupabaseCartDataSource
+        repositories/    # CartRepositoryImpl
       domain/
+        models/          # CartItem
+        interfaces/      # ICartRepository
       presentation/
     orders/
       data/
@@ -179,16 +183,26 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
 12. **測試命名：should_[預期結果]_when_[條件]**
 13. **Web 版非 ShellRoute 子頁面（如商品詳情）需自行在 Scaffold body 加入 `WebNavBarStandalone()`，不會自動繼承頂部導覽列**
 14. **循環依賴解法：將常數/路徑抽到獨立檔案（如 `route_paths.dart`），再由主檔用 `export` 重新匯出，讓既有 import 不受影響**
+15. **跨頁面持久化的 notifier 使用 `@Riverpod(keepAlive: true)`** — 需要在 navigation 之間保留 state 的 notifier（如購物車）必須加 keepAlive，否則離開頁面時 state 會被 dispose 重置
 
 ## 已知技術債
 
 > MVP 階段暫緩補齊，優先完成功能開發。
 
-- **cart / orders 缺 data 層** — 目前邏輯在 provider 直接呼叫 Supabase，未經過 datasource / repository / interface 分層
+- **orders 缺 data 層** — 目前邏輯在 provider 直接呼叫 Supabase，未經過 datasource / repository / interface 分層
 - **admin 缺 domain models** — 系統設定目前以 `Map<String, String>` 傳遞，應抽出 `AdminSetting` 等 model
-- **wishlist 是空殼** — 僅有 `index.dart`，data / domain / presentation 層尚未實作
 - **各 feature 缺 `presentation/widgets/` 資料夾** — 可重用子元件目前直接寫在 screen 檔案內，未拆分
 - **Profile 子路由行動版 NavBar 問題** — `/profile/edit`、`/profile/address` 嵌套在 `StatefulShellBranch` 內，行動版子頁面會顯示底部 NavBar。Web 版正常，行動版上線前需改為獨立頂層路由（加自己的 Scaffold）或動態隱藏 BottomNavigationBar
+
+## 待實作功能（Placeholder 路由）
+
+以下路由已定義在 `app_router.dart`，但頁面尚未實作（目前顯示 `_PlaceholderScreen`）：
+
+- `/announcements` — 用戶公告列表頁
+- `/page/:pageKey` — 靜態說明頁（購買須知、FAQ、退換貨政策等）
+- `/admin/dashboard/orders/:orderId` — Admin 訂單詳情頁
+- `/admin/dashboard/announcements` — Admin 公告管理
+- `/admin/dashboard/pages` — Admin 說明頁管理
 
 ## Platform Notes
 
