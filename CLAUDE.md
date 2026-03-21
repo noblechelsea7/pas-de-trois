@@ -184,6 +184,10 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
 13. **Web 版非 ShellRoute 子頁面（如商品詳情）需自行在 Scaffold body 加入 `WebNavBarStandalone()`，不會自動繼承頂部導覽列**
 14. **循環依賴解法：將常數/路徑抽到獨立檔案（如 `route_paths.dart`），再由主檔用 `export` 重新匯出，讓既有 import 不受影響**
 15. **跨頁面持久化的 notifier 使用 `@Riverpod(keepAlive: true)`** — 需要在 navigation 之間保留 state 的 notifier（如購物車）必須加 keepAlive，否則離開頁面時 state 會被 dispose 重置
+16. **執行 build_runner 後必須將 generated files 一起 commit** — 每次執行 `dart run build_runner build` 之後，必須將以下檔案加入同一個 commit，否則 CI build 會失敗：
+    - `*.freezed.dart`
+    - `*.g.dart`
+    - `*.gr.dart`
 
 ## 已知技術債
 
