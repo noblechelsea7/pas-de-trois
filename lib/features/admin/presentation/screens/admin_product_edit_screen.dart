@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../products/domain/models/product.dart';
+import '../../../products/presentation/providers/product_providers.dart';
 import '../providers/admin_providers.dart';
 
 class AdminProductEditDialog extends ConsumerStatefulWidget {
@@ -27,6 +28,7 @@ class _AdminProductEditDialogState
     extends ConsumerState<AdminProductEditDialog> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameCtrl;
+  late final TextEditingController _brandNameCtrl;
   late final TextEditingController _descCtrl;
   late final TextEditingController _krwPriceCtrl;
   late final TextEditingController _twdPriceCtrl;
@@ -34,8 +36,9 @@ class _AdminProductEditDialogState
   late final TextEditingController _domesticFeeCtrl;
   late final TextEditingController _sourceUrlCtrl;
 
-  Uint8List? _imageBytes;  // newly picked image bytes (for preview + upload)
+  Uint8List? _imageBytes;
   bool _saving = false;
+  bool _isAutoTwd = true; // false once user manually edits TWD
 
   bool get _isEdit => widget.product != null;
 
@@ -51,6 +54,7 @@ class _AdminProductEditDialogState
     super.initState();
     final p = widget.product;
     _nameCtrl = TextEditingController(text: p?.name ?? '');
+    _brandNameCtrl = TextEditingController(text: p?.brandName ?? '');
     _descCtrl = TextEditingController(text: p?.description ?? '');
     _krwPriceCtrl = TextEditingController(text: p?.krwPrice.toString() ?? '');
     _twdPriceCtrl = TextEditingController(text: p?.twdPrice.toString() ?? '');
@@ -58,11 +62,20 @@ class _AdminProductEditDialogState
     _domesticFeeCtrl =
         TextEditingController(text: p?.domesticShippingFee.toString() ?? '0');
     _sourceUrlCtrl = TextEditingController(text: p?.sourceUrl ?? '');
+
+    // For existing products, start in manual mode (preserve existing TWD)
+    _isAutoTwd = p == null;
+
+    _krwPriceCtrl.addListener(_onKrwChanged);
+    _twdPriceCtrl.addListener(_onTwdEdited);
   }
 
   @override
   void dispose() {
+    _krwPriceCtrl.removeListener(_onKrwChanged);
+    _twdPriceCtrl.removeListener(_onTwdEdited);
     _nameCtrl.dispose();
+    _brandNameCtrl.dispose();
     _descCtrl.dispose();
     _krwPriceCtrl.dispose();
     _twdPriceCtrl.dispose();
@@ -70,6 +83,35 @@ class _AdminProductEditDialogState
     _domesticFeeCtrl.dispose();
     _sourceUrlCtrl.dispose();
     super.dispose();
+  }
+
+  void _onKrwChanged() {
+    if (!_isAutoTwd) return;
+    final krw = int.tryParse(_krwPriceCtrl.text.trim());
+    if (krw == null || krw == 0) return;
+    final settings = ref.read(productSettingsProvider).valueOrNull ?? {};
+    final rate = double.tryParse(settings['exchange_rate'] ?? '') ?? 25.0;
+    final twd = (krw / rate).round();
+    // Update without triggering _onTwdEdited → temporarily remove listener
+    _twdPriceCtrl.removeListener(_onTwdEdited);
+    _twdPriceCtrl.text = twd.toString();
+    _twdPriceCtrl.addListener(_onTwdEdited);
+  }
+
+  void _onTwdEdited() {
+    // If user typed in TWD field directly, switch to manual mode
+    if (_isAutoTwd) {
+      // Only disable auto if the value differs from what auto would produce
+      final krw = int.tryParse(_krwPriceCtrl.text.trim());
+      if (krw != null && krw > 0) {
+        final settings = ref.read(productSettingsProvider).valueOrNull ?? {};
+        final rate = double.tryParse(settings['exchange_rate'] ?? '') ?? 25.0;
+        final autoTwd = (krw / rate).round().toString();
+        if (_twdPriceCtrl.text.trim() != autoTwd) {
+          setState(() => _isAutoTwd = false);
+        }
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -89,8 +131,10 @@ class _AdminProductEditDialogState
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
+    final brandName = _brandNameCtrl.text.trim();
     final data = {
       'name': _nameCtrl.text.trim(),
+      'brand_name': brandName.isEmpty ? null : brandName,
       'description': _descCtrl.text.trim(),
       'krw_price': int.parse(_krwPriceCtrl.text.trim()),
       'twd_price': int.parse(_twdPriceCtrl.text.trim()),
@@ -161,6 +205,8 @@ class _AdminProductEditDialogState
                   // ── Form fields ───────────────────────────────────────────
                   _field('商品名稱', _nameCtrl, required: true),
                   const SizedBox(height: 12),
+                  _field('品牌名稱', _brandNameCtrl),
+                  const SizedBox(height: 12),
                   _field('描述', _descCtrl, maxLines: 3),
                   const SizedBox(height: 12),
                   Row(
@@ -171,8 +217,7 @@ class _AdminProductEditDialogState
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _field('台幣價格 (TWD)', _twdPriceCtrl,
-                            required: true, isNumber: true),
+                        child: _twdField(),
                       ),
                     ],
                   ),
@@ -228,6 +273,25 @@ class _AdminProductEditDialogState
           ),
         ),
       ),
+    );
+  }
+
+  /// TWD price field with auto/manual suffix hint.
+  Widget _twdField() {
+    return TextFormField(
+      controller: _twdPriceCtrl,
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      decoration: InputDecoration(
+        labelText: '台幣價格 (TWD)',
+        suffixText: _isAutoTwd ? '自動換算' : '已自訂',
+        suffixStyle: TextStyle(
+          fontSize: 11,
+          color: _isAutoTwd ? AppColors.success : AppColors.textSecondary,
+        ),
+      ),
+      validator: (v) =>
+          (v == null || v.trim().isEmpty) ? '台幣價格 (TWD) 為必填' : null,
     );
   }
 
