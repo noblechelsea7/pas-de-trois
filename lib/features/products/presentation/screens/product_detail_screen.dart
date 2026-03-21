@@ -131,6 +131,8 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
     final category =
         categories.where((c) => c.id == product.categoryId).firstOrNull;
 
+    final deliveryDays = settings['delivery_days'] ?? '10-14';
+
     if (AppBreakpoints.isWeb(context)) {
       return _buildWebLayout(
         context,
@@ -139,6 +141,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
         selectedVariants: selectedVariants,
         images: images,
         category: category,
+        deliveryDays: deliveryDays,
       );
     }
 
@@ -149,6 +152,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
       selectedVariants: selectedVariants,
       images: images,
       category: category,
+      deliveryDays: deliveryDays,
     );
   }
 
@@ -160,6 +164,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
     required int displayPrice,
     required Map<String, String> selectedVariants,
     required List<ProductImage> images,
+    required String deliveryDays,
     required dynamic category,
   }) {
     return Center(
@@ -350,7 +355,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                '預計到貨：下單後約 10-14 個工作天',
+                                '預計到貨：下單後約 $deliveryDays 個工作天',
                                 style: AppTextStyles.bodySmall.copyWith(
                                     color: AppColors.textSecondary),
                               ),
@@ -408,6 +413,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
     required int displayPrice,
     required Map<String, String> selectedVariants,
     required List<ProductImage> images,
+    required String deliveryDays,
     required dynamic category,
   }) {
     return Center(
@@ -518,7 +524,7 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          '預計到貨：下單後約 10-14 個工作天',
+                          '預計到貨：下單後約 $deliveryDays 個工作天',
                           style: AppTextStyles.bodySmall
                               .copyWith(color: AppColors.textSecondary),
                         ),

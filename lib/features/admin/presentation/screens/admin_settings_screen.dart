@@ -32,6 +32,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   late final TextEditingController _exchangeRate;
   late final TextEditingController _intlShippingRate;
   late final TextEditingController _freeShippingThreshold;
+  late final TextEditingController _deliveryDays;
   late final TextEditingController _announcement;
 
   @override
@@ -43,6 +44,8 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
         text: widget.settings['intl_shipping_rate_per_kg'] ?? '180');
     _freeShippingThreshold = TextEditingController(
         text: widget.settings['free_shipping_threshold'] ?? '3000');
+    _deliveryDays = TextEditingController(
+        text: widget.settings['delivery_days'] ?? '10-14');
     _announcement = TextEditingController(
         text: widget.settings['announcement_text'] ?? '');
   }
@@ -52,6 +55,7 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
     _exchangeRate.dispose();
     _intlShippingRate.dispose();
     _freeShippingThreshold.dispose();
+    _deliveryDays.dispose();
     _announcement.dispose();
     super.dispose();
   }
@@ -181,7 +185,32 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
                 ),
                 Divider(height: 1, color: theme.dividerColor),
 
-                // 4. 首頁公告
+                // 4. 預計到貨天數
+                _SettingRow(
+                  title: '預計到貨天數',
+                  description: '顯示於商品頁，例如：10-14',
+                  field: SizedBox(
+                    width: 180,
+                    child: TextField(
+                      controller: _deliveryDays,
+                      keyboardType: TextInputType.text,
+                      decoration: InputDecoration(
+                        suffixText: '個工作天',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 10),
+                      ),
+                    ),
+                  ),
+                  onSave: () =>
+                      _save('delivery_days', _deliveryDays.text),
+                ),
+                Divider(height: 1, color: theme.dividerColor),
+
+                // 5. 首頁公告
                 Padding(
                   padding: const EdgeInsets.symmetric(
                       vertical: 18, horizontal: 20),

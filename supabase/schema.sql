@@ -507,7 +507,8 @@ create policy "settings_write_admin"
 insert into settings (key, value) values
   ('exchange_rate', '25.0'),
   ('intl_shipping_rate_per_kg', '180'),
-  ('free_shipping_threshold', '3000');
+  ('free_shipping_threshold', '3000'),
+  ('delivery_days', '10-14');
 
 -- ============================================================
 -- INDEXES for performance
