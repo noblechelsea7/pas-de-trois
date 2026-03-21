@@ -104,7 +104,7 @@ class _ProductDetailPage extends StatelessWidget {
     final isWeb = AppBreakpoints.isWeb(context);
 
     if (isWeb) {
-      // Web: show WebNavBar at top, no back button
+      // Web: show WebNavBar at top; action buttons are in the right column
       return Scaffold(
         backgroundColor: Colors.white,
         body: Column(
@@ -114,9 +114,6 @@ class _ProductDetailPage extends StatelessWidget {
               child: ProductDetailScreen(productId: productId),
             ),
           ],
-        ),
-        bottomNavigationBar: SafeArea(
-          child: _ProductDetailBottomBarLoader(productId: productId),
         ),
       );
     }
