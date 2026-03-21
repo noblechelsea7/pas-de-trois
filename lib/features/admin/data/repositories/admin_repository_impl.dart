@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -29,8 +31,12 @@ class AdminRepositoryImpl implements IAdminRepository {
       _datasource.getAllProducts(includeInactive: includeInactive);
 
   @override
-  Future<void> createProduct(Map<String, dynamic> data) =>
+  Future<String> createProduct(Map<String, dynamic> data) =>
       _datasource.createProduct(data);
+
+  @override
+  Future<String> uploadProductImage(String productId, Uint8List bytes) =>
+      _datasource.uploadProductImage(productId, bytes);
 
   @override
   Future<void> updateProduct(String productId, Map<String, dynamic> data) =>

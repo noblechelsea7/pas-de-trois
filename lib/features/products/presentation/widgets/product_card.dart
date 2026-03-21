@@ -31,7 +31,9 @@ class ProductCard extends ConsumerWidget {
       internationalShippingFee: intlFee,
     );
 
-    final imageUrl = product.images.isNotEmpty ? product.images.first.url : null;
+    final imageUrl = product.images.isNotEmpty
+        ? product.images.first.url
+        : product.imageUrl;
 
     return InkWell(
       onTap: () => context.push('/products/${product.id}'),

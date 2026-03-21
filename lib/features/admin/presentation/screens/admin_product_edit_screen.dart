@@ -1,6 +1,8 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/app_theme.dart';
 import '../../../products/domain/models/product.dart';
@@ -31,9 +33,18 @@ class _AdminProductEditDialogState
   late final TextEditingController _weightCtrl;
   late final TextEditingController _domesticFeeCtrl;
   late final TextEditingController _sourceUrlCtrl;
+
+  Uint8List? _imageBytes;  // newly picked image bytes (for preview + upload)
   bool _saving = false;
 
   bool get _isEdit => widget.product != null;
+
+  /// Existing image URL (from product.imageUrl or first product_image).
+  String? get _existingImageUrl =>
+      widget.product?.imageUrl ??
+      (widget.product?.images.isNotEmpty == true
+          ? widget.product!.images.first.url
+          : null);
 
   @override
   void initState() {
@@ -61,6 +72,19 @@ class _AdminProductEditDialogState
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final xfile = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      maxHeight: 1600,
+      imageQuality: 85,
+    );
+    if (xfile == null) return;
+    final bytes = await xfile.readAsBytes();
+    setState(() => _imageBytes = bytes);
+  }
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
@@ -79,11 +103,20 @@ class _AdminProductEditDialogState
 
     try {
       final repo = ref.read(adminRepositoryProvider);
+      String productId;
+
       if (_isEdit) {
         await repo.updateProduct(widget.product!.id, data);
+        productId = widget.product!.id;
       } else {
-        await repo.createProduct(data);
+        productId = await repo.createProduct(data);
       }
+
+      // Upload image if one was picked
+      if (_imageBytes != null) {
+        await repo.uploadProductImage(productId, _imageBytes!);
+      }
+
       widget.onSaved();
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
@@ -116,6 +149,16 @@ class _AdminProductEditDialogState
                     style: AppTextStyles.headlineMedium,
                   ),
                   const SizedBox(height: 20),
+
+                  // ── Image picker ──────────────────────────────────────────
+                  _ImagePickerSection(
+                    imageBytes: _imageBytes,
+                    existingImageUrl: _existingImageUrl,
+                    onPick: _pickImage,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // ── Form fields ───────────────────────────────────────────
                   _field('商品名稱', _nameCtrl, required: true),
                   const SizedBox(height: 12),
                   _field('描述', _descCtrl, maxLines: 3),
@@ -150,11 +193,14 @@ class _AdminProductEditDialogState
                   const SizedBox(height: 12),
                   _field('來源網址', _sourceUrlCtrl),
                   const SizedBox(height: 24),
+
+                  // ── Actions ───────────────────────────────────────────────
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: _saving ? null : () => Navigator.of(context).pop(),
+                        onPressed:
+                            _saving ? null : () => Navigator.of(context).pop(),
                         child: const Text('取消'),
                       ),
                       const SizedBox(width: 12),
@@ -209,6 +255,100 @@ class _AdminProductEditDialogState
       validator: required
           ? (v) => (v == null || v.trim().isEmpty) ? '$label 為必填' : null
           : null,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Image picker section
+// ---------------------------------------------------------------------------
+
+class _ImagePickerSection extends StatelessWidget {
+  const _ImagePickerSection({
+    required this.imageBytes,
+    required this.existingImageUrl,
+    required this.onPick,
+  });
+
+  final Uint8List? imageBytes;
+  final String? existingImageUrl;
+  final VoidCallback onPick;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('商品圖片', style: AppTextStyles.bodyMedium),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            // Preview box (3:4)
+            SizedBox(
+              width: 90,
+              child: AspectRatio(
+                aspectRatio: 3 / 4,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: _buildPreview(),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onPick,
+                  icon: const Icon(Icons.upload_rounded, size: 16),
+                  label: Text(
+                    existingImageUrl != null || imageBytes != null
+                        ? '更換圖片'
+                        : '選擇圖片',
+                    style: AppTextStyles.bodySmall,
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(0, 36),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                  ),
+                ),
+                if (imageBytes != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    '已選擇新圖片',
+                    style: AppTextStyles.bodySmall
+                        .copyWith(color: AppColors.success),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreview() {
+    if (imageBytes != null) {
+      return Image.memory(imageBytes!, fit: BoxFit.cover);
+    }
+    if (existingImageUrl != null) {
+      return CachedNetworkImage(
+        imageUrl: existingImageUrl!,
+        fit: BoxFit.cover,
+        placeholder: (_, _) => Container(color: AppColors.surface),
+        errorWidget: (_, _, _) => _placeholder(),
+      );
+    }
+    return _placeholder();
+  }
+
+  Widget _placeholder() {
+    return Container(
+      color: AppColors.surface,
+      child: const Center(
+        child: Icon(Icons.image_outlined, color: AppColors.border, size: 28),
+      ),
     );
   }
 }

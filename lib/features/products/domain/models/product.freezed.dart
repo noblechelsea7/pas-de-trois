@@ -481,6 +481,8 @@ mixin _$Product {
   String? get sourceUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'social_link')
   String? get socialLink => throw _privateConstructorUsedError;
+  @JsonKey(name: 'image_url')
+  String? get imageUrl => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_active')
   bool get isActive => throw _privateConstructorUsedError;
   @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
@@ -517,6 +519,7 @@ abstract class $ProductCopyWith<$Res> {
     @JsonKey(name: 'purchase_count') int purchaseCount,
     @JsonKey(name: 'source_url') String? sourceUrl,
     @JsonKey(name: 'social_link') String? socialLink,
+    @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_active') bool isActive,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     DateTime createdAt,
@@ -554,6 +557,7 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
     Object? purchaseCount = null,
     Object? sourceUrl = freezed,
     Object? socialLink = freezed,
+    Object? imageUrl = freezed,
     Object? isActive = null,
     Object? createdAt = null,
     Object? images = null,
@@ -609,6 +613,10 @@ class _$ProductCopyWithImpl<$Res, $Val extends Product>
                 ? _value.socialLink
                 : socialLink // ignore: cast_nullable_to_non_nullable
                       as String?,
+            imageUrl: freezed == imageUrl
+                ? _value.imageUrl
+                : imageUrl // ignore: cast_nullable_to_non_nullable
+                      as String?,
             isActive: null == isActive
                 ? _value.isActive
                 : isActive // ignore: cast_nullable_to_non_nullable
@@ -652,6 +660,7 @@ abstract class _$$ProductImplCopyWith<$Res> implements $ProductCopyWith<$Res> {
     @JsonKey(name: 'purchase_count') int purchaseCount,
     @JsonKey(name: 'source_url') String? sourceUrl,
     @JsonKey(name: 'social_link') String? socialLink,
+    @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_active') bool isActive,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     DateTime createdAt,
@@ -688,6 +697,7 @@ class __$$ProductImplCopyWithImpl<$Res>
     Object? purchaseCount = null,
     Object? sourceUrl = freezed,
     Object? socialLink = freezed,
+    Object? imageUrl = freezed,
     Object? isActive = null,
     Object? createdAt = null,
     Object? images = null,
@@ -743,6 +753,10 @@ class __$$ProductImplCopyWithImpl<$Res>
             ? _value.socialLink
             : socialLink // ignore: cast_nullable_to_non_nullable
                   as String?,
+        imageUrl: freezed == imageUrl
+            ? _value.imageUrl
+            : imageUrl // ignore: cast_nullable_to_non_nullable
+                  as String?,
         isActive: null == isActive
             ? _value.isActive
             : isActive // ignore: cast_nullable_to_non_nullable
@@ -781,6 +795,7 @@ class _$ProductImpl implements _Product {
     @JsonKey(name: 'purchase_count') this.purchaseCount = 0,
     @JsonKey(name: 'source_url') this.sourceUrl,
     @JsonKey(name: 'social_link') this.socialLink,
+    @JsonKey(name: 'image_url') this.imageUrl,
     @JsonKey(name: 'is_active') this.isActive = true,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     required this.createdAt,
@@ -828,6 +843,9 @@ class _$ProductImpl implements _Product {
   @JsonKey(name: 'social_link')
   final String? socialLink;
   @override
+  @JsonKey(name: 'image_url')
+  final String? imageUrl;
+  @override
   @JsonKey(name: 'is_active')
   final bool isActive;
   @override
@@ -853,7 +871,7 @@ class _$ProductImpl implements _Product {
 
   @override
   String toString() {
-    return 'Product(id: $id, categoryId: $categoryId, name: $name, description: $description, sizeInfo: $sizeInfo, krwPrice: $krwPrice, twdPrice: $twdPrice, weightKg: $weightKg, domesticShippingFee: $domesticShippingFee, purchaseCount: $purchaseCount, sourceUrl: $sourceUrl, socialLink: $socialLink, isActive: $isActive, createdAt: $createdAt, images: $images, variants: $variants)';
+    return 'Product(id: $id, categoryId: $categoryId, name: $name, description: $description, sizeInfo: $sizeInfo, krwPrice: $krwPrice, twdPrice: $twdPrice, weightKg: $weightKg, domesticShippingFee: $domesticShippingFee, purchaseCount: $purchaseCount, sourceUrl: $sourceUrl, socialLink: $socialLink, imageUrl: $imageUrl, isActive: $isActive, createdAt: $createdAt, images: $images, variants: $variants)';
   }
 
   @override
@@ -883,6 +901,8 @@ class _$ProductImpl implements _Product {
                 other.sourceUrl == sourceUrl) &&
             (identical(other.socialLink, socialLink) ||
                 other.socialLink == socialLink) &&
+            (identical(other.imageUrl, imageUrl) ||
+                other.imageUrl == imageUrl) &&
             (identical(other.isActive, isActive) ||
                 other.isActive == isActive) &&
             (identical(other.createdAt, createdAt) ||
@@ -907,6 +927,7 @@ class _$ProductImpl implements _Product {
     purchaseCount,
     sourceUrl,
     socialLink,
+    imageUrl,
     isActive,
     createdAt,
     const DeepCollectionEquality().hash(_images),
@@ -942,6 +963,7 @@ abstract class _Product implements Product {
     @JsonKey(name: 'purchase_count') final int purchaseCount,
     @JsonKey(name: 'source_url') final String? sourceUrl,
     @JsonKey(name: 'social_link') final String? socialLink,
+    @JsonKey(name: 'image_url') final String? imageUrl,
     @JsonKey(name: 'is_active') final bool isActive,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson)
     required final DateTime createdAt,
@@ -986,6 +1008,9 @@ abstract class _Product implements Product {
   @override
   @JsonKey(name: 'social_link')
   String? get socialLink;
+  @override
+  @JsonKey(name: 'image_url')
+  String? get imageUrl;
   @override
   @JsonKey(name: 'is_active')
   bool get isActive;

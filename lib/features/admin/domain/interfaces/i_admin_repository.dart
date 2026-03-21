@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -14,9 +16,10 @@ abstract interface class IAdminRepository {
 
   // Products
   Future<List<Product>> getAllProducts({bool includeInactive = true});
-  Future<void> createProduct(Map<String, dynamic> data);
+  Future<String> createProduct(Map<String, dynamic> data);
   Future<void> updateProduct(String productId, Map<String, dynamic> data);
   Future<void> toggleProductActive(String productId, bool isActive);
+  Future<String> uploadProductImage(String productId, Uint8List bytes);
 
   // Members
   Future<List<UserProfile>> getAllMembers();

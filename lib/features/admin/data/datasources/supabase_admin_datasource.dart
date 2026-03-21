@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../auth/domain/models/user_profile.dart';
@@ -72,8 +74,52 @@ class SupabaseAdminDatasource {
         .toList();
   }
 
-  Future<void> createProduct(Map<String, dynamic> data) async {
-    await _client.from('products').insert(data);
+  Future<String> createProduct(Map<String, dynamic> data) async {
+    final result =
+        await _client.from('products').insert(data).select('id').single();
+    return result['id'] as String;
+  }
+
+  /// Uploads [bytes] to Supabase Storage under product-images/{productId}/,
+  /// inserts a row into product_images, and updates products.image_url.
+  /// Returns the public URL of the uploaded image.
+  Future<String> uploadProductImage(
+    String productId,
+    Uint8List bytes,
+  ) async {
+    final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final path = '$productId/$timestamp.jpg';
+
+    await _client.storage.from('product-images').uploadBinary(
+          path,
+          bytes,
+          fileOptions:
+              const FileOptions(contentType: 'image/jpeg', upsert: true),
+        );
+
+    final url =
+        _client.storage.from('product-images').getPublicUrl(path);
+
+    // Update products.image_url
+    await _client
+        .from('products')
+        .update({'image_url': url}).eq('id', productId);
+
+    // Replace existing primary image row
+    await _client
+        .from('product_images')
+        .delete()
+        .eq('product_id', productId)
+        .eq('is_primary', true);
+
+    await _client.from('product_images').insert({
+      'product_id': productId,
+      'url': url,
+      'sort_order': 0,
+      'is_primary': true,
+    });
+
+    return url;
   }
 
   Future<void> updateProduct(

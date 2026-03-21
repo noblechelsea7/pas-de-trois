@@ -51,6 +51,7 @@ _$ProductImpl _$$ProductImplFromJson(Map<String, dynamic> json) =>
       purchaseCount: (json['purchase_count'] as num?)?.toInt() ?? 0,
       sourceUrl: json['source_url'] as String?,
       socialLink: json['social_link'] as String?,
+      imageUrl: json['image_url'] as String?,
       isActive: json['is_active'] as bool? ?? true,
       createdAt: _dateTimeFromJson(json['created_at'] as String),
       images: json['product_images'] == null
@@ -75,6 +76,7 @@ Map<String, dynamic> _$$ProductImplToJson(_$ProductImpl instance) =>
       'purchase_count': instance.purchaseCount,
       'source_url': instance.sourceUrl,
       'social_link': instance.socialLink,
+      'image_url': instance.imageUrl,
       'is_active': instance.isActive,
       'created_at': instance.createdAt.toIso8601String(),
       'product_images': instance.images,
