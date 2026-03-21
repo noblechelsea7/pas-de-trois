@@ -204,6 +204,21 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
 - `/admin/dashboard/announcements` — Admin 公告管理
 - `/admin/dashboard/pages` — Admin 說明頁管理
 
+## 套件升級（MVP 完成後整批處理）
+
+> 以下三個套件有破壞性變更，必須同時升級，不要單獨升。
+
+- **Riverpod 2.x → 3.x** — breaking changes，需整批遷移所有 providers
+- **go_router 14.x → 17.x** — breaking API changes
+- **freezed 2.x → 3.x** — breaking changes（含 freezed_annotation、riverpod_generator 同步升級）
+
+## dart:html 廢棄（待處理）
+
+- `web_history_web.dart` 第 2 行使用 `dart:html`
+- Flutter 3.x 官方建議改用 `package:web` + `dart:js_interop`
+- 目前用 `// ignore` 壓住，功能正常
+- 等升級 Flutter 版本時一起處理
+
 ## Platform Notes
 
 - **Android:** `android/app/src/main/kotlin/com/koreanproxy/korea_proxy/MainActivity.kt`
