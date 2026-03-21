@@ -20,11 +20,6 @@ import '../providers/product_providers.dart';
 // Size reference data
 // ---------------------------------------------------------------------------
 
-const _kSizeLabels = ['XS', 'S', 'M', 'L', 'XL'];
-
-const _kChestSizes = {'XS': '85', 'S': '90', 'M': '95', 'L': '100', 'XL': '105'};
-const _kWaistSizes = {'XS': '24', 'S': '25', 'M': '26', 'L': '27', 'XL': '28'};
-
 // ---------------------------------------------------------------------------
 // Root screen
 // ---------------------------------------------------------------------------
@@ -217,6 +212,16 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
                               ),
                             ),
 
+                          // Size reference (web: below thumbnails)
+                          if (category != null)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                  40, 24, 32, 0),
+                              child: _SizeReferenceExpansionTile(
+                                categoryName: category.name,
+                              ),
+                            ),
+
                           // Description + info tiles
                           Padding(
                             padding:
@@ -380,11 +385,6 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
                             ),
                           ],
 
-                          // Size reference
-                          if (category != null)
-                            _SizeReferenceExpansionTile(
-                                categorySlug: category.slug ?? ''),
-
                           // Quantity
                           const SizedBox(height: 8),
                           _QuantityRow(productId: product.id),
@@ -547,15 +547,17 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
                       ),
                     ],
 
+                    // Size reference (mobile: below variants)
+                    if (category != null) ...[
+                      const SizedBox(height: 8),
+                      _SizeReferenceExpansionTile(
+                          categoryName: category.name),
+                    ],
+
                     // Quantity
                     const SizedBox(height: 8),
                     _QuantityRow(productId: product.id),
                     const SizedBox(height: 24),
-
-                    // Size reference table
-                    if (category != null)
-                      _SizeReferenceExpansionTile(
-                          categorySlug: category.slug ?? ''),
 
                     // Size info
                     if (product.sizeInfo != null) ...[
@@ -679,15 +681,17 @@ class _ThumbnailRow extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _SizeReferenceExpansionTile extends StatelessWidget {
-  const _SizeReferenceExpansionTile({required this.categorySlug});
-  final String categorySlug;
+  const _SizeReferenceExpansionTile({required this.categoryName});
+  final String categoryName;
+
+  bool get _isTops =>
+      categoryName.contains('上衣') || categoryName.contains('外套');
+  bool get _isBottoms => categoryName.contains('褲子');
+  bool get _isAccessories => categoryName.contains('配件');
 
   @override
   Widget build(BuildContext context) {
-    // Only show for clothing categories
-    if (categorySlug == 'best' ||
-        categorySlug == 'new' ||
-        categorySlug.isEmpty) {
+    if (!_isTops && !_isBottoms && !_isAccessories) {
       return const SizedBox.shrink();
     }
 
@@ -701,67 +705,73 @@ class _SizeReferenceExpansionTile extends StatelessWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-          childrenPadding:
-              const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           title: Text('尺寸參考', style: AppTextStyles.titleMedium),
-          children: [_buildSizeContent()],
+          children: [_buildContent(context)],
         ),
       ),
     );
   }
 
-  Widget _buildSizeContent() {
-    if (categorySlug == 'accessories') {
+  Widget _buildContent(BuildContext context) {
+    if (_isAccessories) {
       return Text(
-        '此商品尺寸不限，無需選擇尺寸。',
-        style: AppTextStyles.bodyMedium
-            .copyWith(color: AppColors.textSecondary),
+        '此商品為配件類，尺寸不限',
+        style:
+            AppTextStyles.bodyMedium.copyWith(color: AppColors.textSecondary),
       );
     }
 
-    final isTops =
-        categorySlug == 'tops' || categorySlug == 'outerwear';
-    final sizeData = isTops ? _kChestSizes : _kWaistSizes;
-    final unitLabel = isTops ? '胸圍 (cm)' : '腰圍 (inch)';
+    final headerBg =
+        Theme.of(context).colorScheme.primary.withValues(alpha: 0.1);
 
-    return Table(
-      border: TableBorder.all(
-        color: AppColors.border,
-        width: 0.5,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      children: [
-        // Header
-        TableRow(
-          decoration: const BoxDecoration(color: AppColors.surface),
-          children: [
-            _tableCell('尺寸', isHeader: true),
-            _tableCell(unitLabel, isHeader: true),
-          ],
+    final table = Table(
+      border: TableBorder.all(color: AppColors.border, width: 0.5),
+      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+      columnWidths: const {0: IntrinsicColumnWidth()},
+      children: _isTops ? _topsRows(headerBg) : _bottomsRows(headerBg),
+    );
+
+    // Horizontal scroll for mobile
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: table,
+    );
+  }
+
+  List<TableRow> _topsRows(Color headerBg) => [
+        _headerRow(['尺寸', 'XS', 'S', 'M', 'L', 'XL'], headerBg),
+        _dataRow(['胸圍(cm)', '88', '92', '96', '100', '104']),
+        _dataRow(['衣長(cm)', '63', '65', '67', '69', '71']),
+      ];
+
+  List<TableRow> _bottomsRows(Color headerBg) => [
+        _headerRow(['尺寸', 'XS', 'S', 'M', 'L', 'XL'], headerBg),
+        _dataRow(['腰圍(inch)', '24', '25', '26', '27', '28']),
+        _dataRow(['褲長(cm)', '95', '97', '99', '101', '103']),
+      ];
+
+  TableRow _headerRow(List<String> cells, Color bg) => TableRow(
+        decoration: BoxDecoration(color: bg),
+        children: cells
+            .map((c) => _cell(c, isHeader: true))
+            .toList(),
+      );
+
+  TableRow _dataRow(List<String> cells) => TableRow(
+        children: cells.map((c) => _cell(c)).toList(),
+      );
+
+  Widget _cell(String text, {bool isHeader = false}) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        child: Text(
+          text,
+          textAlign: TextAlign.center,
+          style: isHeader
+              ? AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.w600)
+              : AppTextStyles.bodySmall,
         ),
-        for (final size in _kSizeLabels)
-          TableRow(
-            children: [
-              _tableCell(size),
-              _tableCell(sizeData[size] ?? '-'),
-            ],
-          ),
-      ],
-    );
-  }
-
-  Widget _tableCell(String text, {bool isHeader = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Text(
-        text,
-        style: isHeader
-            ? AppTextStyles.bodySmall
-                .copyWith(fontWeight: FontWeight.w600)
-            : AppTextStyles.bodySmall,
-      ),
-    );
-  }
+      );
 }
 
 // ---------------------------------------------------------------------------
