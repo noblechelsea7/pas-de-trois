@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -13,6 +14,19 @@ import '../../../../shared/widgets/wishlist_heart_button.dart';
 import '../../../cart/presentation/providers/cart_providers.dart';
 import '../../domain/models/product.dart';
 import '../providers/product_providers.dart';
+
+// ---------------------------------------------------------------------------
+// Size reference data
+// ---------------------------------------------------------------------------
+
+const _kSizeLabels = ['XS', 'S', 'M', 'L', 'XL'];
+
+const _kChestSizes = {'XS': '85', 'S': '90', 'M': '95', 'L': '100', 'XL': '105'};
+const _kWaistSizes = {'XS': '24', 'S': '25', 'M': '26', 'L': '27', 'XL': '28'};
+
+// ---------------------------------------------------------------------------
+// Root screen
+// ---------------------------------------------------------------------------
 
 class ProductDetailScreen extends ConsumerWidget {
   const ProductDetailScreen({super.key, required this.productId});
@@ -62,12 +76,40 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
     super.dispose();
   }
 
+  /// Effective image list: prefers product_images, falls back to image_url.
+  List<ProductImage> get _effectiveImages {
+    if (widget.product.images.isNotEmpty) return widget.product.images;
+    if (widget.product.imageUrl != null) {
+      return [
+        ProductImage(
+          id: '',
+          productId: widget.product.id,
+          url: widget.product.imageUrl!,
+        ),
+      ];
+    }
+    return [];
+  }
+
+  Future<void> _copyUrl() async {
+    await Clipboard.setData(ClipboardData(text: Uri.base.toString()));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('已複製連結'),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final product = widget.product;
     final settings = ref.watch(productSettingsProvider).valueOrNull ?? {};
     final intlRate =
-        double.tryParse(settings['intl_shipping_rate_per_kg'] ?? '') ??
+        double.tryParse(settings[AppConstants.settingIntlShippingRate] ?? '') ??
             ShippingConstants.defaultIntlShippingRatePerKg;
 
     final intlFee = ShippingCalculator.calculateIntlFee(
@@ -80,137 +122,428 @@ class _ProductDetailState extends ConsumerState<_ProductDetail> {
       internationalShippingFee: intlFee,
     );
 
-    final selectedVariants =
-        ref.watch(selectedVariantsProvider(product.id));
+    final selectedVariants = ref.watch(selectedVariantsProvider(product.id));
+    final images = _effectiveImages;
+
+    // Resolve category slug for size reference
+    final categories = ref.watch(categoriesProvider).valueOrNull ?? [];
+    final category =
+        categories.where((c) => c.id == product.categoryId).firstOrNull;
 
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1200),
         child: CustomScrollView(
-      slivers: [
-        // Fixed-height image gallery
-        SliverToBoxAdapter(
-          child: SizedBox(
-            height: 360,
-            child: _ImageGallery(
-              images: product.images,
-              currentIndex: _currentImageIndex,
-              pageController: _pageController,
-              onPageChanged: (i) => setState(() => _currentImageIndex = i),
+          slivers: [
+            // ── Image gallery ───────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: SizedBox(
+                height: 360,
+                child: _ImageGallery(
+                  images: images,
+                  currentIndex: _currentImageIndex,
+                  pageController: _pageController,
+                  onPageChanged: (i) =>
+                      setState(() => _currentImageIndex = i),
+                ),
+              ),
             ),
-          ),
-        ),
 
-        // Content
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Name + wishlist heart
-                Row(
+            // ── Thumbnail strip (only when > 1 image) ───────────────────────
+            if (images.length > 1)
+              SliverToBoxAdapter(
+                child: _ThumbnailRow(
+                  images: images,
+                  currentIndex: _currentImageIndex,
+                  onTap: (i) {
+                    _pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 250),
+                      curve: Curves.easeInOut,
+                    );
+                    setState(() => _currentImageIndex = i);
+                  },
+                ),
+              ),
+
+            // ── Content ─────────────────────────────────────────────────────
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+                child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        product.name,
-                        style: AppTextStyles.headlineMedium,
+                    // Brand name
+                    if (product.brandName != null &&
+                        product.brandName!.isNotEmpty) ...[
+                      Text(
+                        product.brandName!.toUpperCase(),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          letterSpacing: 1.5,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    // Name + share + wishlist
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            product.name,
+                            style: AppTextStyles.headlineMedium,
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: _copyUrl,
+                          icon: const Icon(Icons.link_rounded, size: 20),
+                          color: AppColors.textSecondary,
+                          tooltip: '複製連結',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                        ),
+                        WishlistHeartButton(
+                          productId: product.id,
+                          size: 24,
+                          withBackground: false,
+                          padding: const EdgeInsets.fromLTRB(4, 0, 0, 0),
+                        ),
+                      ],
                     ),
-                    WishlistHeartButton(
-                      productId: product.id,
-                      size: 24,
-                      withBackground: false,
-                      padding: const EdgeInsets.fromLTRB(12, 0, 0, 0),
+                    const SizedBox(height: 12),
+
+                    // Price
+                    Text(
+                      'NT\$ $displayPrice',
+                      style: AppTextStyles.price.copyWith(fontSize: 24),
+                    ),
+                    const SizedBox(height: 4),
+                    Text('含代購費、韓國及國際運費',
+                        style: AppTextStyles.bodySmall),
+                    const SizedBox(height: 8),
+
+                    // Arrival time
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.local_shipping_outlined,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '預計到貨：下單後約 10-14 個工作天',
+                          style: AppTextStyles.bodySmall
+                              .copyWith(color: AppColors.textSecondary),
+                        ),
+                      ],
+                    ),
+
+                    // Variant selectors
+                    if (product.variants.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      ...product.variants.map(
+                        (variant) => _VariantSelector(
+                          productId: product.id,
+                          variant: variant,
+                          selectedOption: selectedVariants[variant.name],
+                          onSelect: (option) => ref
+                              .read(
+                                  selectedVariantsProvider(product.id).notifier)
+                              .select(variant.name, option),
+                        ),
+                      ),
+                    ],
+
+                    // Quantity
+                    const SizedBox(height: 8),
+                    _QuantityRow(productId: product.id),
+                    const SizedBox(height: 24),
+
+                    // Size reference table
+                    if (category != null)
+                      _SizeReferenceExpansionTile(
+                          categorySlug: category.slug ?? ''),
+
+                    // Size info
+                    if (product.sizeInfo != null) ...[
+                      const SizedBox(height: 8),
+                      Text('尺寸資訊', style: AppTextStyles.titleLarge),
+                      const SizedBox(height: 8),
+                      Text(
+                        product.sizeInfo!,
+                        style: AppTextStyles.bodyMedium
+                            .copyWith(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Description
+                    if (product.description != null) ...[
+                      Text('商品說明', style: AppTextStyles.titleLarge),
+                      const SizedBox(height: 8),
+                      Text(
+                        product.description!,
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                          height: 1.7,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+
+                    // Info expansion tiles
+                    const _InfoExpansionTiles(),
+                    const SizedBox(height: 16),
+
+                    // Weight
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppColors.surface,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.scale_outlined,
+                              size: 16, color: AppColors.textSecondary),
+                          const SizedBox(width: 8),
+                          Text(
+                            '商品重量 ${product.weightKg} kg',
+                            style: AppTextStyles.bodySmall,
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-
-                // Final price only
-                Text(
-                  'NT\$ $displayPrice',
-                  style: AppTextStyles.price.copyWith(fontSize: 24),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '含代購費、韓國及國際運費',
-                  style: AppTextStyles.bodySmall,
-                ),
-
-                // Variant selectors
-                if (product.variants.isNotEmpty) ...[
-                  const SizedBox(height: 24),
-                  ...product.variants.map(
-                    (variant) => _VariantSelector(
-                      productId: product.id,
-                      variant: variant,
-                      selectedOption: selectedVariants[variant.name],
-                      onSelect: (option) => ref
-                          .read(selectedVariantsProvider(product.id).notifier)
-                          .select(variant.name, option),
-                    ),
-                  ),
-                ],
-
-                // Quantity selector
-                const SizedBox(height: 8),
-                _QuantityRow(productId: product.id),
-
-                const SizedBox(height: 24),
-
-                // Size info
-                if (product.sizeInfo != null) ...[
-                  Text('尺寸資訊', style: AppTextStyles.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    product.sizeInfo!,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textSecondary),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Description
-                if (product.description != null) ...[
-                  Text('商品說明', style: AppTextStyles.titleLarge),
-                  const SizedBox(height: 8),
-                  Text(
-                    product.description!,
-                    style: AppTextStyles.bodyMedium
-                        .copyWith(color: AppColors.textSecondary, height: 1.7),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-
-                // Weight info
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.scale_outlined,
-                        size: 16,
-                        color: AppColors.textSecondary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '商品重量 ${product.weightKg} kg',
-                        style: AppTextStyles.bodySmall,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Thumbnail strip
+// ---------------------------------------------------------------------------
+
+class _ThumbnailRow extends StatelessWidget {
+  const _ThumbnailRow({
+    required this.images,
+    required this.currentIndex,
+    required this.onTap,
+  });
+
+  final List<ProductImage> images;
+  final int currentIndex;
+  final ValueChanged<int> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 80,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        itemCount: images.length,
+        itemBuilder: (context, i) {
+          final isSelected = i == currentIndex;
+          return GestureDetector(
+            onTap: () => onTap(i),
+            child: Container(
+              width: 56,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(
+                  color: isSelected ? AppColors.primary : AppColors.border,
+                  width: isSelected ? 1.5 : 1,
+                ),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(3),
+                child: CachedNetworkImage(
+                  imageUrl: images[i].url,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) =>
+                      Container(color: AppColors.surface),
+                  errorWidget: (_, _, _) =>
+                      Container(color: AppColors.surface),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Size reference expansion tile
+// ---------------------------------------------------------------------------
+
+class _SizeReferenceExpansionTile extends StatelessWidget {
+  const _SizeReferenceExpansionTile({required this.categorySlug});
+  final String categorySlug;
+
+  @override
+  Widget build(BuildContext context) {
+    // Only show for clothing categories
+    if (categorySlug == 'best' ||
+        categorySlug == 'new' ||
+        categorySlug.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding:
+              const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: Text('尺寸參考', style: AppTextStyles.titleMedium),
+          children: [_buildSizeContent()],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSizeContent() {
+    if (categorySlug == 'accessories') {
+      return Text(
+        '此商品尺寸不限，無需選擇尺寸。',
+        style: AppTextStyles.bodyMedium
+            .copyWith(color: AppColors.textSecondary),
+      );
+    }
+
+    final isTops =
+        categorySlug == 'tops' || categorySlug == 'outerwear';
+    final sizeData = isTops ? _kChestSizes : _kWaistSizes;
+    final unitLabel = isTops ? '胸圍 (cm)' : '腰圍 (inch)';
+
+    return Table(
+      border: TableBorder.all(
+        color: AppColors.border,
+        width: 0.5,
+        borderRadius: BorderRadius.circular(4),
+      ),
+      children: [
+        // Header
+        TableRow(
+          decoration: const BoxDecoration(color: AppColors.surface),
+          children: [
+            _tableCell('尺寸', isHeader: true),
+            _tableCell(unitLabel, isHeader: true),
+          ],
+        ),
+        for (final size in _kSizeLabels)
+          TableRow(
+            children: [
+              _tableCell(size),
+              _tableCell(sizeData[size] ?? '-'),
+            ],
           ),
+      ],
+    );
+  }
+
+  Widget _tableCell(String text, {bool isHeader = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Text(
+        text,
+        style: isHeader
+            ? AppTextStyles.bodySmall
+                .copyWith(fontWeight: FontWeight.w600)
+            : AppTextStyles.bodySmall,
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Info expansion tiles (配送、退換貨、注意事項)
+// ---------------------------------------------------------------------------
+
+class _InfoExpansionTiles extends StatelessWidget {
+  const _InfoExpansionTiles();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: const [
+        _InfoTile(
+          title: '配送說明',
+          content:
+              '採空運直送台灣，預計下單後 10-14 個工作天送達。\n'
+              '運費已包含在商品價格中，結帳時不另收國際運費。\n'
+              '台灣境內配送提供便利商店取貨或宅配兩種方式。',
+        ),
+        _InfoTile(
+          title: '退換貨說明',
+          content:
+              '商品有明顯瑕疵（非人為損壞）可於收貨後 3 天內聯繫客服申請退換。\n'
+              '人為損壞、使用後商品或主觀因素（尺寸、顏色偏差）恕不受理退換。\n'
+              '退換處理時間約 7-14 個工作天。',
+        ),
+        _InfoTile(
+          title: '注意事項',
+          content:
+              '代購商品以韓國當地庫存為準，售完即止，若缺貨將全額退款。\n'
+              '商品圖片顏色可能因螢幕設定而略有差異，請以實物為準。\n'
+              '如需確認尺寸或庫存，歡迎下單前先透過 LINE 與我們確認。',
         ),
       ],
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
+  const _InfoTile({required this.title, required this.content});
+  final String title;
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding:
+              const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          title: Text(title, style: AppTextStyles.titleMedium),
+          children: [
+            Text(
+              content,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: AppColors.textSecondary,
+                height: 1.7,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -263,11 +596,12 @@ class _VariantSelector extends StatelessWidget {
               return GestureDetector(
                 onTap: () => onSelect(option),
                 child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
-                    color:
-                        isSelected ? AppColors.primary : Colors.transparent,
+                    color: isSelected
+                        ? AppColors.primary
+                        : Colors.transparent,
                     border: Border.all(
                       color: isSelected
                           ? AppColors.primary
@@ -307,7 +641,8 @@ class _QuantityRow extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final quantity = ref.watch(productDetailQuantityProvider(productId));
-    final notifier = ref.read(productDetailQuantityProvider(productId).notifier);
+    final notifier =
+        ref.read(productDetailQuantityProvider(productId).notifier);
     final settings = ref.watch(productSettingsProvider).valueOrNull ?? {};
     final maxQty = int.tryParse(
           settings[AppConstants.settingMaxQuantityPerItem] ?? '',
@@ -369,7 +704,8 @@ class _QuantityRow extends ConsumerWidget {
         const SizedBox(width: 12),
         Text(
           '（最多 $maxQty 件）',
-          style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint),
+          style:
+              AppTextStyles.bodySmall.copyWith(color: AppColors.textHint),
         ),
       ],
     );
@@ -377,7 +713,7 @@ class _QuantityRow extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Image gallery with PageView + dot indicator
+// Image gallery with PageView — BoxFit.contain
 // ---------------------------------------------------------------------------
 
 class _ImageGallery extends StatelessWidget {
@@ -388,7 +724,7 @@ class _ImageGallery extends StatelessWidget {
     required this.onPageChanged,
   });
 
-  final List images;
+  final List<ProductImage> images;
   final int currentIndex;
   final PageController pageController;
   final ValueChanged<int> onPageChanged;
@@ -399,59 +735,30 @@ class _ImageGallery extends StatelessWidget {
       return Container(
         color: AppColors.surface,
         child: const Center(
-          child: Icon(Icons.image_outlined, size: 80, color: AppColors.border),
+          child:
+              Icon(Icons.image_outlined, size: 80, color: AppColors.border),
         ),
       );
     }
 
-    return Stack(
-      children: [
-        PageView.builder(
-          controller: pageController,
-          onPageChanged: onPageChanged,
-          itemCount: images.length,
-          itemBuilder: (context, index) {
-            return CachedNetworkImage(
-              imageUrl: images[index].url as String,
-              fit: BoxFit.cover,
-              placeholder: (_, _) => Container(color: AppColors.surface),
-              errorWidget: (_, _, _) => Container(
-                color: AppColors.surface,
-                child: const Center(
-                  child: Icon(Icons.broken_image_outlined,
-                      size: 48, color: AppColors.border),
-                ),
-              ),
-            );
-          },
-        ),
-
-        // Dot indicators
-        if (images.length > 1)
-          Positioned(
-            bottom: 12,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(images.length, (i) {
-                final selected = i == currentIndex;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: selected ? 20 : 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? AppColors.primary
-                        : AppColors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                );
-              }),
+    return PageView.builder(
+      controller: pageController,
+      onPageChanged: onPageChanged,
+      itemCount: images.length,
+      itemBuilder: (context, index) {
+        return CachedNetworkImage(
+          imageUrl: images[index].url,
+          fit: BoxFit.contain,
+          placeholder: (_, _) => Container(color: AppColors.surface),
+          errorWidget: (_, _, _) => Container(
+            color: AppColors.surface,
+            child: const Center(
+              child: Icon(Icons.broken_image_outlined,
+                  size: 48, color: AppColors.border),
             ),
           ),
-      ],
+        );
+      },
     );
   }
 }
@@ -499,7 +806,6 @@ class ProductDetailBottomBar extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          // 加入購物車
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () {
@@ -522,7 +828,6 @@ class ProductDetailBottomBar extends ConsumerWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // 直接購買
           Expanded(
             child: ElevatedButton(
               onPressed: () {

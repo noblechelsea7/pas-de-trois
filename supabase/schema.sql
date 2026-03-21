@@ -141,6 +141,7 @@ create table products (
   purchase_count          integer not null default 0,
   source_url              text,
   social_link             text,
+  brand_name              text,
   image_url               text,
   is_active               boolean not null default true,
   created_at              timestamptz not null default now()

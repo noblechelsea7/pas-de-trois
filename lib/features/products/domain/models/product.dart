@@ -68,6 +68,7 @@ class Product with _$Product {
     @JsonKey(name: 'purchase_count') @Default(0) int purchaseCount,
     @JsonKey(name: 'source_url') String? sourceUrl,
     @JsonKey(name: 'social_link') String? socialLink,
+    @JsonKey(name: 'brand_name') String? brandName,
     @JsonKey(name: 'image_url') String? imageUrl,
     @JsonKey(name: 'is_active') @Default(true) bool isActive,
     @JsonKey(name: 'created_at', fromJson: _dateTimeFromJson) required DateTime createdAt,

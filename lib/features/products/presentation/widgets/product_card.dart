@@ -66,6 +66,14 @@ class ProductCard extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 8),
+          if (product.brandName != null && product.brandName!.isNotEmpty)
+            Text(
+              product.brandName!.toUpperCase(),
+              style: AppTextStyles.bodySmall.copyWith(
+                color: AppColors.textSecondary,
+                letterSpacing: 1.0,
+              ),
+            ),
           Text(
             product.name,
             style: AppTextStyles.titleMedium,
