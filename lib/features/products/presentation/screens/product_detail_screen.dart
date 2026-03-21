@@ -728,7 +728,7 @@ class _SizeReferenceExpansionTile extends StatelessWidget {
     final table = Table(
       border: TableBorder.all(color: AppColors.border, width: 0.5),
       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-      columnWidths: const {0: IntrinsicColumnWidth()},
+      defaultColumnWidth: const IntrinsicColumnWidth(),
       children: _isTops ? _topsRows(headerBg) : _bottomsRows(headerBg),
     );
 
