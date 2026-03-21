@@ -993,7 +993,7 @@ class _QuantityRow extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
-// Image gallery with PageView — BoxFit.contain
+// Image gallery with PageView — BoxFit.contain + nav arrows
 // ---------------------------------------------------------------------------
 
 class _ImageGallery extends StatelessWidget {
@@ -1009,6 +1009,14 @@ class _ImageGallery extends StatelessWidget {
   final PageController pageController;
   final ValueChanged<int> onPageChanged;
 
+  void _goTo(int index) {
+    pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (images.isEmpty) {
@@ -1021,24 +1029,110 @@ class _ImageGallery extends StatelessWidget {
       );
     }
 
-    return PageView.builder(
-      controller: pageController,
-      onPageChanged: onPageChanged,
-      itemCount: images.length,
-      itemBuilder: (context, index) {
-        return CachedNetworkImage(
-          imageUrl: images[index].url,
-          fit: BoxFit.contain,
-          placeholder: (_, _) => Container(color: const Color(0xFFF8F8F8)),
-          errorWidget: (_, _, _) => Container(
-            color: AppColors.surface,
-            child: const Center(
-              child: Icon(Icons.broken_image_outlined,
-                  size: 48, color: AppColors.border),
+    return Stack(
+      children: [
+        // PageView
+        PageView.builder(
+          controller: pageController,
+          onPageChanged: onPageChanged,
+          itemCount: images.length,
+          itemBuilder: (context, index) {
+            return CachedNetworkImage(
+              imageUrl: images[index].url,
+              fit: BoxFit.contain,
+              placeholder: (_, _) =>
+                  Container(color: const Color(0xFFF8F8F8)),
+              errorWidget: (_, _, _) => Container(
+                color: AppColors.surface,
+                child: const Center(
+                  child: Icon(Icons.broken_image_outlined,
+                      size: 48, color: AppColors.border),
+                ),
+              ),
+            );
+          },
+        ),
+
+        // Left arrow
+        if (images.length > 1 && currentIndex > 0)
+          Positioned(
+            left: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _NavArrow(
+                icon: Icons.chevron_left_rounded,
+                onTap: () => _goTo(currentIndex - 1),
+              ),
             ),
           ),
-        );
-      },
+
+        // Right arrow
+        if (images.length > 1 && currentIndex < images.length - 1)
+          Positioned(
+            right: 8,
+            top: 0,
+            bottom: 0,
+            child: Center(
+              child: _NavArrow(
+                icon: Icons.chevron_right_rounded,
+                onTap: () => _goTo(currentIndex + 1),
+              ),
+            ),
+          ),
+
+        // Image counter (bottom right)
+        if (images.length > 1)
+          Positioned(
+            bottom: 8,
+            right: 12,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.black45,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '${currentIndex + 1} / ${images.length}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _NavArrow extends StatelessWidget {
+  const _NavArrow({required this.icon, required this.onTap});
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.85),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.12),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 22, color: AppColors.textPrimary),
+      ),
     );
   }
 }

@@ -35,8 +35,12 @@ class AdminRepositoryImpl implements IAdminRepository {
       _datasource.createProduct(data);
 
   @override
-  Future<String> uploadProductImage(String productId, Uint8List bytes) =>
-      _datasource.uploadProductImage(productId, bytes);
+  Future<void> replaceAllProductImages(
+    String productId,
+    List<String> keptUrls,
+    List<Uint8List> newImages,
+  ) =>
+      _datasource.replaceAllProductImages(productId, keptUrls, newImages);
 
   @override
   Future<void> updateProduct(String productId, Map<String, dynamic> data) =>

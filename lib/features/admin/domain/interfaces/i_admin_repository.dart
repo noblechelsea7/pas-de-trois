@@ -19,7 +19,16 @@ abstract interface class IAdminRepository {
   Future<String> createProduct(Map<String, dynamic> data);
   Future<void> updateProduct(String productId, Map<String, dynamic> data);
   Future<void> toggleProductActive(String productId, bool isActive);
-  Future<String> uploadProductImage(String productId, Uint8List bytes);
+
+  /// Replaces all images for [productId]:
+  /// - keeps [keptUrls] (in order, existing rows only),
+  /// - uploads [newImages] bytes appended after kept,
+  /// - updates products.image_url to first image.
+  Future<void> replaceAllProductImages(
+    String productId,
+    List<String> keptUrls,
+    List<Uint8List> newImages,
+  );
 
   // Members
   Future<List<UserProfile>> getAllMembers();
