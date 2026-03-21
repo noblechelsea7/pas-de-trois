@@ -12,20 +12,35 @@ export '../../domain/models/cart_item.dart';
 part 'cart_providers.g.dart';
 
 /// In-memory + Supabase-backed cart.
+/// - keepAlive: true so the notifier persists across navigation (preserves
+///   local guest cart items and keeps auth listener alive).
 /// - Logged-in users: synced to Supabase on every mutation; loaded on startup.
 /// - Guest users: in-memory only; merged to Supabase on login.
-@riverpod
+@Riverpod(keepAlive: true)
 class CartItems extends _$CartItems {
   @override
   Map<String, CartItem> build() {
-    // React to login/logout events
-    ref.listen(currentAuthUserProvider, (prev, next) {
-      if (prev?.id != next?.id) {
-        _onAuthChanged(prevId: prev?.id, newId: next?.id);
+    // Listen directly to Supabase auth stream for reliable sign-in/sign-out
+    // detection regardless of widget tree state.
+    ref.listen(authStateChangesProvider, (prev, next) {
+      final event = next.valueOrNull;
+      if (event == null) return;
+      switch (event.event) {
+        case AuthChangeEvent.signedIn:
+        case AuthChangeEvent.tokenRefreshed:
+          final newId = event.session?.user.id;
+          final prevId = prev?.valueOrNull?.session?.user.id;
+          if (newId != null && newId != prevId) {
+            _onLogin(newId);
+          }
+        case AuthChangeEvent.signedOut:
+          state = {};
+        default:
+          break;
       }
     });
 
-    // Load from Supabase if already logged in at startup
+    // Already logged in at startup — load remote cart immediately.
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId != null) {
       Future.microtask(() => _loadFromRemote(userId));
@@ -57,35 +72,23 @@ class CartItems extends _$CartItems {
     }
   }
 
-  /// Called when auth state changes (login or logout).
-  Future<void> _onAuthChanged({
-    required String? prevId,
-    required String? newId,
-  }) async {
-    if (newId != null) {
-      // User just logged in: merge local items into Supabase, then reload.
-      final localItems = Map<String, CartItem>.from(state);
-      final repo = _makeRepo(newId);
+  /// Called when the user signs in.
+  /// Merges any local (guest) items into Supabase, then reloads.
+  Future<void> _onLogin(String userId) async {
+    final localItems = Map<String, CartItem>.from(state);
+    final repo = _makeRepo(userId);
 
-      try {
-        final remoteItems = await repo.getCartItems();
-        final merged = {for (final item in remoteItems) item.key: item};
-
-        // Push local-only items to Supabase
-        for (final local in localItems.values) {
-          if (!merged.containsKey(local.key)) {
-            merged[local.key] = local;
-            await repo.upsertItem(local);
-          }
-        }
-        state = merged;
-      } catch (_) {
-        // Fallback: just load remote without merging
-        await _loadFromRemote(newId);
+    try {
+      // Push each local item to Supabase (upsert = add if missing)
+      for (final local in localItems.values) {
+        await repo.upsertItem(local);
       }
-    } else {
-      // User logged out: clear cart
-      state = {};
+      // Reload the authoritative list from Supabase
+      final remoteItems = await repo.getCartItems();
+      state = {for (final item in remoteItems) item.key: item};
+    } catch (_) {
+      // Fallback: load remote without merging
+      await _loadFromRemote(userId);
     }
   }
 
