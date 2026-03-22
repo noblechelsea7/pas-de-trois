@@ -207,10 +207,11 @@ class _PageEditDialogState extends ConsumerState<_PageEditDialog>
 
   @override
   Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 700, maxHeight: 620),
+        constraints: BoxConstraints(maxWidth: 700, maxHeight: maxHeight),
         child: Column(
           children: [
             // Header
@@ -293,6 +294,7 @@ class _PageEditDialogState extends ConsumerState<_PageEditDialog>
                 ),
               ),
             ),
+            const Divider(height: 1),
             // Footer
             Padding(
               padding: const EdgeInsets.all(16),
