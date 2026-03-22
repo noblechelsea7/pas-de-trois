@@ -207,121 +207,94 @@ class _PageEditDialogState extends ConsumerState<_PageEditDialog>
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.sizeOf(context).height;
-    final dialogHeight = (screenHeight * 0.85).clamp(400.0, 640.0);
-    return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+    // Content height = 85% of screen minus ~180px for title/tabbar/actions
+    final contentHeight =
+        (MediaQuery.sizeOf(context).height * 0.85 - 180).clamp(220.0, 420.0);
+
+    return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: SizedBox(
+      titlePadding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      // Header
+      title: Row(
+        children: [
+          Text('編輯說明頁', style: AppTextStyles.titleLarge),
+          const Spacer(),
+          IconButton(
+            onPressed: () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close_rounded),
+            iconSize: 20,
+          ),
+        ],
+      ),
+      // Content (scrollable middle section)
+      content: SizedBox(
         width: 700,
-        height: dialogHeight,
+        height: contentHeight,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 16, 0),
-              child: Row(
-                children: [
-                  Text('編輯說明頁', style: AppTextStyles.titleLarge),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                    iconSize: 20,
-                  ),
-                ],
-              ),
-            ),
             // Title field
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: TextField(
-                controller: _titleCtrl,
-                decoration: InputDecoration(
-                  labelText: '頁面標題',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                ),
+            TextField(
+              controller: _titleCtrl,
+              decoration: InputDecoration(
+                labelText: '頁面標題',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                isDense: true,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               ),
             ),
+            const SizedBox(height: 12),
             // Tab bar
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
-              child: TabBar(
-                controller: _tabCtrl,
-                tabs: const [Tab(text: '編輯'), Tab(text: '預覽')],
-                labelColor: AppColors.primary,
-                indicatorColor: AppColors.primary,
-                unselectedLabelColor: AppColors.textSecondary,
-              ),
+            TabBar(
+              controller: _tabCtrl,
+              tabs: const [Tab(text: '編輯'), Tab(text: '預覽')],
+              labelColor: AppColors.primary,
+              indicatorColor: AppColors.primary,
+              unselectedLabelColor: AppColors.textSecondary,
             ),
-            // Tab content
+            const SizedBox(height: 8),
+            // Tab content — fills remaining height
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                child: TabBarView(
-                  controller: _tabCtrl,
-                  children: [
-                    // Edit tab
-                    TextField(
-                      controller: _contentCtrl,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
-                      decoration: InputDecoration(
-                        hintText: '輸入 Markdown 內容...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        contentPadding: const EdgeInsets.all(12),
-                      ),
-                    ),
-                    // Preview tab
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: AppColors.border),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: _contentCtrl.text.isEmpty
-                          ? Center(child: Text('（無內容）', style: AppTextStyles.bodySmall.copyWith(color: AppColors.textHint)))
-                          : Markdown(
-                              data: _contentCtrl.text,
-                              styleSheet: MarkdownStyleSheet(
-                                p: AppTextStyles.bodyMedium.copyWith(height: 1.8),
-                                h2: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.w700),
-                                h3: AppTextStyles.titleMedium,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const Divider(height: 1),
-            // Footer
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+              child: TabBarView(
+                controller: _tabCtrl,
                 children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('取消'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: _saving ? null : _save,
-                    style: ElevatedButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  // Edit tab
+                  TextField(
+                    controller: _contentCtrl,
+                    maxLines: null,
+                    expands: true,
+                    textAlignVertical: TextAlignVertical.top,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 13),
+                    decoration: InputDecoration(
+                      hintText: '輸入 Markdown 內容...',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.all(12),
                     ),
-                    child: _saving
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                          )
-                        : const Text('儲存'),
+                  ),
+                  // Preview tab
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: AppColors.border),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: _contentCtrl.text.isEmpty
+                        ? Center(
+                            child: Text('（無內容）',
+                                style: AppTextStyles.bodySmall
+                                    .copyWith(color: AppColors.textHint)))
+                        : Markdown(
+                            data: _contentCtrl.text,
+                            styleSheet: MarkdownStyleSheet(
+                              p: AppTextStyles.bodyMedium.copyWith(height: 1.8),
+                              h2: AppTextStyles.titleLarge
+                                  .copyWith(fontWeight: FontWeight.w700),
+                              h3: AppTextStyles.titleMedium,
+                            ),
+                          ),
                   ),
                 ],
               ),
@@ -329,6 +302,27 @@ class _PageEditDialogState extends ConsumerState<_PageEditDialog>
           ],
         ),
       ),
+      // Actions — AlertDialog guarantees these render at the bottom
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('取消'),
+        ),
+        ElevatedButton(
+          onPressed: _saving ? null : _save,
+          style: ElevatedButton.styleFrom(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: Colors.white),
+                )
+              : const Text('儲存'),
+        ),
+      ],
     );
   }
 }
