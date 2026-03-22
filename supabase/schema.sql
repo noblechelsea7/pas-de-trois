@@ -419,23 +419,35 @@ create trigger trg_log_order_status
 -- ============================================================
 
 create table announcements (
-  id          uuid primary key default uuid_generate_v4(),
-  title       text not null,
-  content     text not null,
-  is_active   boolean not null default true,
-  created_at  timestamptz not null default now()
+  id           uuid primary key default uuid_generate_v4(),
+  title        text not null,
+  content      text not null,
+  is_published boolean not null default false,
+  starts_at    timestamptz,
+  ends_at      timestamptz,
+  created_at   timestamptz not null default now()
 );
+
+-- Migration: run if upgrading from initial schema
+-- ALTER TABLE announcements ADD COLUMN IF NOT EXISTS is_published boolean not null default false;
+-- ALTER TABLE announcements ADD COLUMN IF NOT EXISTS starts_at timestamptz;
+-- ALTER TABLE announcements ADD COLUMN IF NOT EXISTS ends_at timestamptz;
 
 alter table announcements enable row level security;
 
-create policy "announcements_read_active"
+create policy "announcements_read_published"
   on announcements for select
-  using (is_active = true or (
-    exists (
-      select 1 from profiles p
-      where p.id = auth.uid() and p.role = 'admin'
+  using (
+    is_published = true
+    and (starts_at is null or starts_at <= now())
+    and (ends_at is null or ends_at >= now())
+    or (
+      exists (
+        select 1 from profiles p
+        where p.id = auth.uid() and p.role = 'admin'
+      )
     )
-  ));
+  );
 
 create policy "announcements_write_admin"
   on announcements for all

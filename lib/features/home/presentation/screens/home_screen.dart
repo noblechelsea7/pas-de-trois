@@ -8,6 +8,7 @@ import '../../../../core/utils/responsive.dart';
 import '../../../products/domain/models/product.dart';
 import '../../../products/presentation/providers/product_providers.dart';
 import '../../../products/presentation/widgets/product_card.dart';
+import '../providers/announcement_providers.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -193,8 +194,8 @@ class _AnnouncementBanner extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final settings = ref.watch(productSettingsProvider).valueOrNull ?? {};
-    final text = settings['announcement_text'] ?? '';
+    final titleAsync = ref.watch(latestAnnouncementTitleProvider);
+    final text = titleAsync.valueOrNull ?? '';
     if (text.isEmpty) return const SizedBox.shrink();
 
     return Container(

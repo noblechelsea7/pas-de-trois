@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/models/announcement.dart';
 import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
@@ -222,5 +223,44 @@ class SupabaseAdminDatasource {
       'content': content,
       'updated_at': DateTime.now().toIso8601String(),
     }).eq('key', key);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Announcements
+  // ---------------------------------------------------------------------------
+
+  Future<List<Announcement>> getAllAnnouncements() async {
+    final data = await _client
+        .from('announcements')
+        .select()
+        .order('created_at', ascending: false);
+    return (data as List)
+        .map((e) => Announcement.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<String> createAnnouncement(Map<String, dynamic> data) async {
+    final result = await _client
+        .from('announcements')
+        .insert(data)
+        .select('id')
+        .single();
+    return result['id'] as String;
+  }
+
+  Future<void> updateAnnouncement(
+      String id, Map<String, dynamic> data) async {
+    await _client.from('announcements').update(data).eq('id', id);
+  }
+
+  Future<void> deleteAnnouncement(String id) async {
+    await _client.from('announcements').delete().eq('id', id);
+  }
+
+  Future<void> toggleAnnouncementPublished(
+      String id, bool isPublished) async {
+    await _client
+        .from('announcements')
+        .update({'is_published': isPublished}).eq('id', id);
   }
 }

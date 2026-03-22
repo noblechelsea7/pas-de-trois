@@ -9,8 +9,10 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../features/home/presentation/screens/announcements_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/home/presentation/screens/static_page_screen.dart';
+import '../../features/admin/presentation/screens/admin_announcements_screen.dart';
 import '../../features/admin/presentation/screens/admin_pages_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -447,7 +449,7 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.announcements,
         name: RouteNames.announcements,
-        builder: (context, state) => const _PlaceholderScreen(title: '公告欄'),
+        builder: (context, state) => const AnnouncementsScreen(),
       ),
       GoRoute(
         path: RoutePaths.page,
@@ -521,7 +523,7 @@ GoRouter appRouter(Ref ref) {
                 path: 'announcements',
                 name: RouteNames.adminAnnouncements,
                 builder: (context, state) =>
-                    const _PlaceholderScreen(title: '公告管理'),
+                    const AdminAnnouncementsScreen(),
               ),
               GoRoute(
                 path: 'pages',

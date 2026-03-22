@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../../../core/models/announcement.dart';
 import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
@@ -84,4 +85,24 @@ class AdminRepositoryImpl implements IAdminRepository {
   @override
   Future<void> updatePage(String key, String title, String content) =>
       _datasource.updatePage(key, title, content);
+
+  @override
+  Future<List<Announcement>> getAllAnnouncements() =>
+      _datasource.getAllAnnouncements();
+
+  @override
+  Future<String> createAnnouncement(Map<String, dynamic> data) =>
+      _datasource.createAnnouncement(data);
+
+  @override
+  Future<void> updateAnnouncement(String id, Map<String, dynamic> data) =>
+      _datasource.updateAnnouncement(id, data);
+
+  @override
+  Future<void> deleteAnnouncement(String id) =>
+      _datasource.deleteAnnouncement(id);
+
+  @override
+  Future<void> toggleAnnouncementPublished(String id, bool isPublished) =>
+      _datasource.toggleAnnouncementPublished(id, isPublished);
 }

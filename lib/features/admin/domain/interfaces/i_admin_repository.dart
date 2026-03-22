@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../../../core/models/announcement.dart';
 import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
@@ -45,4 +46,11 @@ abstract interface class IAdminRepository {
   // Pages
   Future<List<SitePage>> getAllPages();
   Future<void> updatePage(String key, String title, String content);
+
+  // Announcements
+  Future<List<Announcement>> getAllAnnouncements();
+  Future<String> createAnnouncement(Map<String, dynamic> data);
+  Future<void> updateAnnouncement(String id, Map<String, dynamic> data);
+  Future<void> deleteAnnouncement(String id);
+  Future<void> toggleAnnouncementPublished(String id, bool isPublished);
 }

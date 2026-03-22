@@ -119,6 +119,12 @@ class _AdminSidebar extends StatelessWidget {
             currentPath: currentPath,
           ),
           _NavItem(
+            icon: Icons.campaign_rounded,
+            label: '公告管理',
+            path: RoutePaths.adminAnnouncements,
+            currentPath: currentPath,
+          ),
+          _NavItem(
             icon: Icons.description_rounded,
             label: '說明頁',
             path: RoutePaths.adminPages,
