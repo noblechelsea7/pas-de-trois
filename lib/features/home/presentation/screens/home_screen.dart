@@ -21,15 +21,16 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scrollCtrl = ScrollController();
-  Announcement? _webAnnouncement;
+  Announcement? _activeAnnouncement;
+  bool _announcementDismissed = false;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadAnnouncement());
   }
 
-  Future<void> _maybeShowPopup() async {
+  Future<void> _loadAnnouncement() async {
     if (!mounted) return;
     final announcement =
         await ref.read(latestActiveAnnouncementProvider.future);
@@ -41,102 +42,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (prefs.getString(key) == today) return;
     if (!mounted) return;
 
-    if (AppBreakpoints.isWeb(context)) {
-      setState(() => _webAnnouncement = announcement);
-    } else {
-      _showMobileDialog(announcement);
-    }
+    setState(() => _activeAnnouncement = announcement);
   }
 
-  Future<void> _dismissForToday(String id) async {
+  Future<void> _dismissForToday() async {
+    if (_activeAnnouncement == null) return;
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
-    await prefs.setString('dismissed_announcement_$id', today);
+    await prefs.setString(
+        'dismissed_announcement_${_activeAnnouncement!.id}', today);
+    _close();
   }
 
-  void _showMobileDialog(Announcement a) {
-    showDialog<void>(
-      context: context,
-      barrierColor: Colors.black54,
-      builder: (ctx) {
-        final theme = Theme.of(ctx);
-        return Dialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          insetPadding:
-              const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-          clipBehavior: Clip.antiAlias,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Content area
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      a.title,
-                      style: theme.textTheme.titleLarge?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    if (a.content.isNotEmpty) ...[
-                      const SizedBox(height: 12),
-                      Text(
-                        a.content,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          fontSize: 14,
-                          height: 1.8,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              // Bottom button bar — 50/50 split with divider (Korean pattern)
-              Divider(height: 1, color: theme.dividerColor),
-              IntrinsicHeight(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.of(ctx).pop();
-                          _dismissForToday(a.id);
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.colorScheme.onSurfaceVariant,
-                          shape: const RoundedRectangleBorder(),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('今天不再顯示'),
-                      ),
-                    ),
-                    VerticalDivider(width: 1, color: theme.dividerColor),
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
-                          shape: const RoundedRectangleBorder(),
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: const Text('關閉'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
+  void _close() {
+    setState(() {
+      _announcementDismissed = true;
+      _activeAnnouncement = null;
+    });
   }
 
   @override
@@ -149,6 +71,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   Widget build(BuildContext context) {
     final isWeb = AppBreakpoints.isWeb(context);
     final hPad = isWeb ? 48.0 : 20.0;
+    final showAnnouncement = _activeAnnouncement != null && !_announcementDismissed;
+
+    // Mobile: trigger bottom sheet once when announcement loads
+    if (!isWeb && showAnnouncement) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _activeAnnouncement == null) return;
+        final a = _activeAnnouncement!;
+        setState(() {
+          _announcementDismissed = true;
+          _activeAnnouncement = null;
+        });
+        _showMobileBottomSheet(a);
+      });
+    }
 
     return Stack(
       children: [
@@ -178,20 +114,98 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             const SliverToBoxAdapter(child: SizedBox(height: 0)),
           ],
         ),
-        if (_webAnnouncement != null)
+        // Web: floating card at bottom-left
+        if (isWeb && showAnnouncement)
           Positioned(
             left: 24,
             bottom: 24,
             child: _WebAnnouncementCard(
-              announcement: _webAnnouncement!,
-              onDismissForToday: () {
-                _dismissForToday(_webAnnouncement!.id);
-                setState(() => _webAnnouncement = null);
-              },
-              onClose: () => setState(() => _webAnnouncement = null),
+              announcement: _activeAnnouncement!,
+              onDismissForToday: _dismissForToday,
+              onClose: _close,
             ),
           ),
       ],
+    );
+  }
+
+  void _showMobileBottomSheet(Announcement a) {
+    showModalBottomSheet<void>(
+      context: context,
+      barrierColor: Colors.black54,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  a.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (a.content.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    a.content,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      height: 1.8,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Divider(height: 1, color: theme.dividerColor),
+                const SizedBox(height: 4),
+                IntrinsicHeight(
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () async {
+                            final prefs =
+                                await SharedPreferences.getInstance();
+                            final today = DateTime.now()
+                                .toIso8601String()
+                                .substring(0, 10);
+                            await prefs.setString(
+                                'dismissed_announcement_${a.id}', today);
+                            if (ctx.mounted) Navigator.of(ctx).pop();
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor:
+                                theme.colorScheme.onSurfaceVariant,
+                          ),
+                          child: const Text('今天不再顯示'),
+                        ),
+                      ),
+                      VerticalDivider(width: 1, color: theme.dividerColor),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          style: TextButton.styleFrom(
+                            foregroundColor: theme.colorScheme.primary,
+                          ),
+                          child: const Text('關閉'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -321,6 +335,7 @@ class _ShopNowButtonState extends State<_ShopNowButton> {
     );
   }
 }
+
 
 // ---------------------------------------------------------------------------
 // Web Announcement Card (floating bottom-left)
