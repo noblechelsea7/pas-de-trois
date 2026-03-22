@@ -129,7 +129,7 @@ class _AnnouncementRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = DateFormat('yy/MM/dd');
+    final fmt = DateFormat('yy/MM/dd HH:mm');
     String dateRange = '無限制';
     if (announcement.startsAt != null || announcement.endsAt != null) {
       final start = announcement.startsAt != null
@@ -338,23 +338,33 @@ class _AnnouncementEditDialogState
     super.dispose();
   }
 
-  Future<void> _pickDate(BuildContext context,
+  Future<void> _pickDateTime(BuildContext context,
       {required bool isStart}) async {
-    final initial = (isStart ? _startsAt : _endsAt) ?? DateTime.now();
-    final picked = await showDatePicker(
+    final current = isStart ? _startsAt : _endsAt;
+    final initial = current ?? DateTime.now();
+    final pickedDate = await showDatePicker(
       context: context,
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
-    if (picked == null) return;
+    if (pickedDate == null || !mounted) return;
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: current != null
+          ? TimeOfDay.fromDateTime(current)
+          : isStart
+              ? const TimeOfDay(hour: 0, minute: 0)
+              : const TimeOfDay(hour: 23, minute: 59),
+    );
+    if (pickedTime == null) return;
     setState(() {
+      final dt = DateTime(pickedDate.year, pickedDate.month, pickedDate.day,
+          pickedTime.hour, pickedTime.minute);
       if (isStart) {
-        _startsAt = DateTime(
-            picked.year, picked.month, picked.day, 0, 0, 0);
+        _startsAt = dt;
       } else {
-        _endsAt = DateTime(
-            picked.year, picked.month, picked.day, 23, 59, 59);
+        _endsAt = dt;
       }
     });
   }
@@ -400,7 +410,7 @@ class _AnnouncementEditDialogState
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('yyyy/MM/dd');
+    final fmt = DateFormat('yyyy/MM/dd HH:mm');
     final contentHeight =
         (MediaQuery.sizeOf(context).height * 0.85 - 200).clamp(220.0, 380.0);
 
@@ -480,7 +490,7 @@ class _AnnouncementEditDialogState
                     child: _DatePickerField(
                       label: '開始日期',
                       value: _startsAt != null ? fmt.format(_startsAt!) : null,
-                      onTap: () => _pickDate(context, isStart: true),
+                      onTap: () => _pickDateTime(context, isStart: true),
                       onClear: _startsAt != null
                           ? () => setState(() => _startsAt = null)
                           : null,
@@ -491,7 +501,7 @@ class _AnnouncementEditDialogState
                     child: _DatePickerField(
                       label: '結束日期',
                       value: _endsAt != null ? fmt.format(_endsAt!) : null,
-                      onTap: () => _pickDate(context, isStart: false),
+                      onTap: () => _pickDateTime(context, isStart: false),
                       onClear: _endsAt != null
                           ? () => setState(() => _endsAt = null)
                           : null,
