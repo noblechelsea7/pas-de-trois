@@ -26,6 +26,26 @@ final activeAnnouncementsProvider =
 // ignore: unused_element
 typedef ActiveAnnouncementsRef =
     AutoDisposeFutureProviderRef<List<Announcement>>;
+String _$latestActiveAnnouncementHash() =>
+    r'caa9a89e69a53b8c056f733fe87e7bf412160ef1';
+
+/// See also [latestActiveAnnouncement].
+@ProviderFor(latestActiveAnnouncement)
+final latestActiveAnnouncementProvider =
+    AutoDisposeFutureProvider<Announcement?>.internal(
+      latestActiveAnnouncement,
+      name: r'latestActiveAnnouncementProvider',
+      debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+          ? null
+          : _$latestActiveAnnouncementHash,
+      dependencies: null,
+      allTransitiveDependencies: null,
+    );
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef LatestActiveAnnouncementRef =
+    AutoDisposeFutureProviderRef<Announcement?>;
 String _$latestAnnouncementTitleHash() =>
     r'4fe74c16408786e8fecc863cc48000779cefbb10';
 

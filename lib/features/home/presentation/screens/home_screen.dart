@@ -30,7 +30,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _maybeShowPopup() async {
     if (!mounted) return;
-    final announcement = await ref.read(latestAnnouncementProvider.future);
+    final announcement = await ref.read(latestActiveAnnouncementProvider.future);
     if (announcement == null || !mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
@@ -220,71 +220,68 @@ class _AnnouncementDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Dialog(
+    return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                announcement.title,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (announcement.content.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(
-                  announcement.content,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontSize: 14,
-                    height: 1.8,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  OutlinedButton(
-                    onPressed: () async {
-                      final prefs = await SharedPreferences.getInstance();
-                      final today = DateTime.now().toIso8601String().substring(0, 10);
-                      await prefs.setString(
-                          'dismissed_announcement_${announcement.id}', today);
-                      if (context.mounted) Navigator.of(context).pop();
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: theme.colorScheme.onSurfaceVariant,
-                      side: BorderSide(color: theme.dividerColor),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('今天不再顯示'),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: theme.colorScheme.onPrimary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('關閉'),
-                  ),
-                ],
-              ),
-            ],
+      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      title: SizedBox(
+        width: 360,
+        child: Text(
+          announcement.title,
+          style: theme.textTheme.titleLarge?.copyWith(
+            color: theme.colorScheme.primary,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
+      content: announcement.content.isEmpty
+          ? null
+          : SizedBox(
+              width: 360,
+              child: Text(
+                announcement.content,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontSize: 14,
+                  height: 1.8,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+      actions: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            OutlinedButton(
+              onPressed: () async {
+                final prefs = await SharedPreferences.getInstance();
+                final today = DateTime.now().toIso8601String().substring(0, 10);
+                await prefs.setString(
+                    'dismissed_announcement_${announcement.id}', today);
+                if (context.mounted) Navigator.of(context).pop();
+              },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: theme.colorScheme.onSurfaceVariant,
+                side: BorderSide(color: theme.dividerColor),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('今天不再顯示'),
+            ),
+            const SizedBox(width: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+                foregroundColor: theme.colorScheme.onPrimary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('關閉'),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

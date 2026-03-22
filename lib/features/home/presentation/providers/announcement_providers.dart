@@ -23,6 +23,23 @@ Future<List<Announcement>> activeAnnouncements(Ref ref) async {
 }
 
 @riverpod
+Future<Announcement?> latestActiveAnnouncement(Ref ref) async {
+  final client = Supabase.instance.client;
+  final now = DateTime.now().toUtc().toIso8601String();
+  final data = await client
+      .from('announcements')
+      .select()
+      .eq('is_published', true)
+      .or('starts_at.is.null,starts_at.lte.$now')
+      .or('ends_at.is.null,ends_at.gte.$now')
+      .order('created_at', ascending: false)
+      .limit(1)
+      .maybeSingle();
+  if (data == null) return null;
+  return Announcement.fromJson(data as Map<String, dynamic>);
+}
+
+@riverpod
 Future<String?> latestAnnouncementTitle(Ref ref) async {
   final announcements = await ref.watch(activeAnnouncementsProvider.future);
   if (announcements.isEmpty) return null;
