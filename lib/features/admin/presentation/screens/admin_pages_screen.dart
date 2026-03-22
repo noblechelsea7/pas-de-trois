@@ -207,12 +207,16 @@ class _PageEditDialogState extends ConsumerState<_PageEditDialog>
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.85;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final dialogHeight = (screenHeight * 0.85).clamp(400.0, 640.0);
     return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: 700, maxHeight: maxHeight),
+      child: SizedBox(
+        width: 700,
+        height: dialogHeight,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Header
             Padding(
