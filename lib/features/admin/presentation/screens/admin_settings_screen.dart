@@ -33,8 +33,6 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
   late final TextEditingController _intlShippingRate;
   late final TextEditingController _freeShippingThreshold;
   late final TextEditingController _deliveryDays;
-  late final TextEditingController _announcement;
-
   @override
   void initState() {
     super.initState();
@@ -46,8 +44,6 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
         text: widget.settings['free_shipping_threshold'] ?? '3000');
     _deliveryDays = TextEditingController(
         text: widget.settings['delivery_days'] ?? '10-14');
-    _announcement = TextEditingController(
-        text: widget.settings['announcement_text'] ?? '');
   }
 
   @override
@@ -56,7 +52,6 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
     _intlShippingRate.dispose();
     _freeShippingThreshold.dispose();
     _deliveryDays.dispose();
-    _announcement.dispose();
     super.dispose();
   }
 
@@ -207,74 +202,6 @@ class _SettingsBodyState extends ConsumerState<_SettingsBody> {
                   ),
                   onSave: () =>
                       _save('delivery_days', _deliveryDays.text),
-                ),
-                Divider(height: 1, color: theme.dividerColor),
-
-                // 5. 首頁公告
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                      vertical: 18, horizontal: 20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 200,
-                        child: Column(
-                          crossAxisAlignment:
-                              CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '首頁公告',
-                              style: theme.textTheme.bodyMedium
-                                  ?.copyWith(
-                                      fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '顯示在前台首頁，留空則不顯示',
-                              style: theme.textTheme.bodySmall
-                                  ?.copyWith(
-                                color: theme
-                                    .colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: TextField(
-                          controller: _announcement,
-                          maxLines: 3,
-                          decoration: InputDecoration(
-                            hintText: '輸入公告內容...',
-                            border: OutlineInputBorder(
-                              borderRadius:
-                                  BorderRadius.circular(8),
-                            ),
-                            isDense: true,
-                            contentPadding:
-                                const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: TextButton(
-                          onPressed: () => _save(
-                              'announcement_text',
-                              _announcement.text),
-                          style: TextButton.styleFrom(
-                            foregroundColor:
-                                theme.colorScheme.primary,
-                          ),
-                          child: const Text('儲存'),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ],
             ),

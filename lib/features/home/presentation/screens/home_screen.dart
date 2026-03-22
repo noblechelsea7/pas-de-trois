@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../core/models/announcement.dart';
 import '../../../../core/router/route_paths.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/responsive.dart';
@@ -21,6 +23,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scrollCtrl = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeShowPopup());
+  }
+
+  Future<void> _maybeShowPopup() async {
+    if (!mounted) return;
+    final announcement = await ref.read(latestAnnouncementProvider.future);
+    if (announcement == null || !mounted) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    final key = 'dismissed_announcement_${announcement.id}';
+    if (prefs.getString(key) == today) return;
+
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => _AnnouncementDialog(announcement: announcement),
+    );
+  }
+
+  @override
   void dispose() {
     _scrollCtrl.dispose();
     super.dispose();
@@ -35,7 +60,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       controller: _scrollCtrl,
       slivers: [
         SliverToBoxAdapter(child: _HeroBanner(onShopNow: () => context.go(RoutePaths.products))),
-        SliverToBoxAdapter(child: _AnnouncementBanner()),
         SliverToBoxAdapter(
           child: Center(
             child: ConstrainedBox(
@@ -186,32 +210,79 @@ class _ShopNowButtonState extends State<_ShopNowButton> {
 }
 
 // ---------------------------------------------------------------------------
-// Announcement Banner
+// Announcement Dialog
 // ---------------------------------------------------------------------------
 
-class _AnnouncementBanner extends ConsumerWidget {
-  const _AnnouncementBanner();
+class _AnnouncementDialog extends StatelessWidget {
+  const _AnnouncementDialog({required this.announcement});
+  final Announcement announcement;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final titleAsync = ref.watch(latestAnnouncementTitleProvider);
-    final text = titleAsync.valueOrNull ?? '';
-    if (text.isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      width: double.infinity,
-      color: AppColors.surface,
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontFamily: 'Pretendard',
-          fontSize: 13,
-          fontWeight: FontWeight.w400,
-          color: AppColors.textSecondary,
-          letterSpacing: 1.5,
-          height: 1.6,
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Dialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                announcement.title,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              if (announcement.content.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(
+                  announcement.content,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontSize: 14,
+                    height: 1.8,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  OutlinedButton(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      final today = DateTime.now().toIso8601String().substring(0, 10);
+                      await prefs.setString(
+                          'dismissed_announcement_${announcement.id}', today);
+                      if (context.mounted) Navigator.of(context).pop();
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: theme.colorScheme.onSurfaceVariant,
+                      side: BorderSide(color: theme.dividerColor),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('今天不再顯示'),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: theme.colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                    ),
+                    child: const Text('關閉'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

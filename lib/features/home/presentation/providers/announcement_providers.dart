@@ -28,3 +28,10 @@ Future<String?> latestAnnouncementTitle(Ref ref) async {
   if (announcements.isEmpty) return null;
   return announcements.first.title;
 }
+
+@riverpod
+Future<Announcement?> latestAnnouncement(Ref ref) async {
+  final announcements = await ref.watch(activeAnnouncementsProvider.future);
+  if (announcements.isEmpty) return null;
+  return announcements.first;
+}
