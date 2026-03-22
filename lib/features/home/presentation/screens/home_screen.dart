@@ -21,6 +21,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   final _scrollCtrl = ScrollController();
+  Announcement? _webAnnouncement;
 
   @override
   void initState() {
@@ -30,18 +31,95 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _maybeShowPopup() async {
     if (!mounted) return;
-    final announcement = await ref.read(latestActiveAnnouncementProvider.future);
+    final announcement =
+        await ref.read(latestActiveAnnouncementProvider.future);
     if (announcement == null || !mounted) return;
 
     final prefs = await SharedPreferences.getInstance();
     final today = DateTime.now().toIso8601String().substring(0, 10);
     final key = 'dismissed_announcement_${announcement.id}';
     if (prefs.getString(key) == today) return;
-
     if (!mounted) return;
-    await showDialog<void>(
+
+    if (AppBreakpoints.isWeb(context)) {
+      setState(() => _webAnnouncement = announcement);
+    } else {
+      _showMobileSheet(announcement);
+    }
+  }
+
+  Future<void> _dismissForToday(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final today = DateTime.now().toIso8601String().substring(0, 10);
+    await prefs.setString('dismissed_announcement_$id', today);
+  }
+
+  void _showMobileSheet(Announcement a) {
+    showModalBottomSheet<void>(
       context: context,
-      builder: (_) => _AnnouncementDialog(announcement: announcement),
+      barrierColor: Colors.black54,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        final theme = Theme.of(ctx);
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  a.title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (a.content.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    a.content,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontSize: 14,
+                      height: 1.8,
+                      color: theme.colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.of(ctx).pop();
+                          _dismissForToday(a.id);
+                        },
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        child: const Text('今天不再顯示'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.of(ctx).pop(),
+                        style: TextButton.styleFrom(
+                          foregroundColor: theme.colorScheme.primary,
+                        ),
+                        child: const Text('關閉'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -56,28 +134,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final isWeb = AppBreakpoints.isWeb(context);
     final hPad = isWeb ? 48.0 : 20.0;
 
-    return CustomScrollView(
-      controller: _scrollCtrl,
-      slivers: [
-        SliverToBoxAdapter(child: _HeroBanner(onShopNow: () => context.go(RoutePaths.products))),
-        SliverToBoxAdapter(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: _NewArrivalsSection(hPad: hPad, isWeb: isWeb),
+    return Stack(
+      children: [
+        CustomScrollView(
+          controller: _scrollCtrl,
+          slivers: [
+            SliverToBoxAdapter(
+                child: _HeroBanner(
+                    onShopNow: () => context.go(RoutePaths.products))),
+            SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: _NewArrivalsSection(hPad: hPad, isWeb: isWeb),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 1200),
+                  child: _BrandFeatures(hPad: hPad),
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(child: _Footer()),
+            const SliverToBoxAdapter(child: SizedBox(height: 0)),
+          ],
+        ),
+        if (_webAnnouncement != null)
+          Positioned(
+            left: 24,
+            bottom: 24,
+            child: _WebAnnouncementCard(
+              announcement: _webAnnouncement!,
+              onDismissForToday: () {
+                _dismissForToday(_webAnnouncement!.id);
+                setState(() => _webAnnouncement = null);
+              },
+              onClose: () => setState(() => _webAnnouncement = null),
             ),
           ),
-        ),
-        SliverToBoxAdapter(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1200),
-              child: _BrandFeatures(hPad: hPad),
-            ),
-          ),
-        ),
-        const SliverToBoxAdapter(child: _Footer()),
-        const SliverToBoxAdapter(child: SizedBox(height: 0)),
       ],
     );
   }
@@ -210,36 +307,43 @@ class _ShopNowButtonState extends State<_ShopNowButton> {
 }
 
 // ---------------------------------------------------------------------------
-// Announcement Dialog
+// Web Announcement Card (floating bottom-left)
 // ---------------------------------------------------------------------------
 
-class _AnnouncementDialog extends StatelessWidget {
-  const _AnnouncementDialog({required this.announcement});
+class _WebAnnouncementCard extends StatelessWidget {
+  const _WebAnnouncementCard({
+    required this.announcement,
+    required this.onDismissForToday,
+    required this.onClose,
+  });
   final Announcement announcement;
+  final VoidCallback onDismissForToday;
+  final VoidCallback onClose;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
-      contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-      actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      title: SizedBox(
+    return Material(
+      elevation: 8,
+      borderRadius: BorderRadius.circular(16),
+      color: theme.colorScheme.surface,
+      child: Container(
         width: 360,
-        child: Text(
-          announcement.title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      ),
-      content: announcement.content.isEmpty
-          ? null
-          : SizedBox(
-              width: 360,
-              child: Text(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              announcement.title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            if (announcement.content.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
                 announcement.content,
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontSize: 14,
@@ -247,41 +351,31 @@ class _AnnouncementDialog extends StatelessWidget {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-            ),
-      actions: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            OutlinedButton(
-              onPressed: () async {
-                final prefs = await SharedPreferences.getInstance();
-                final today = DateTime.now().toIso8601String().substring(0, 10);
-                await prefs.setString(
-                    'dismissed_announcement_${announcement.id}', today);
-                if (context.mounted) Navigator.of(context).pop();
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.onSurfaceVariant,
-                side: BorderSide(color: theme.dividerColor),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('今天不再顯示'),
-            ),
-            const SizedBox(width: 12),
-            ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text('關閉'),
+            ],
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: onDismissForToday,
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  child: const Text('今天不再顯示'),
+                ),
+                const SizedBox(width: 8),
+                TextButton(
+                  onPressed: onClose,
+                  style: TextButton.styleFrom(
+                    foregroundColor: theme.colorScheme.primary,
+                  ),
+                  child: const Text('關閉'),
+                ),
+              ],
             ),
           ],
         ),
-      ],
+      ),
     );
   }
 }
