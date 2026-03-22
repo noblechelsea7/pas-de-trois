@@ -44,7 +44,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     if (AppBreakpoints.isWeb(context)) {
       setState(() => _webAnnouncement = announcement);
     } else {
-      _showMobileSheet(announcement);
+      _showMobileDialog(announcement);
     }
   }
 
@@ -54,42 +54,54 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     await prefs.setString('dismissed_announcement_$id', today);
   }
 
-  void _showMobileSheet(Announcement a) {
-    showModalBottomSheet<void>(
+  void _showMobileDialog(Announcement a) {
+    showDialog<void>(
       context: context,
       barrierColor: Colors.black54,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  a.title,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (a.content.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    a.content,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontSize: 14,
-                      height: 1.8,
-                      color: theme.colorScheme.onSurface,
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Content area
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      a.title,
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                Row(
+                    if (a.content.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        a.content,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontSize: 14,
+                          height: 1.8,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Bottom button bar — 50/50 split with divider (Korean pattern)
+              Divider(height: 1, color: theme.dividerColor),
+              IntrinsicHeight(
+                child: Row(
                   children: [
                     Expanded(
                       child: TextButton(
@@ -99,24 +111,28 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         },
                         style: TextButton.styleFrom(
                           foregroundColor: theme.colorScheme.onSurfaceVariant,
+                          shape: const RoundedRectangleBorder(),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: const Text('今天不再顯示'),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    VerticalDivider(width: 1, color: theme.dividerColor),
                     Expanded(
                       child: TextButton(
                         onPressed: () => Navigator.of(ctx).pop(),
                         style: TextButton.styleFrom(
                           foregroundColor: theme.colorScheme.primary,
+                          shape: const RoundedRectangleBorder(),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                         ),
                         child: const Text('關閉'),
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -354,7 +370,6 @@ class _WebAnnouncementCard extends StatelessWidget {
             ],
             const SizedBox(height: 16),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton(
                   onPressed: onDismissForToday,
@@ -363,7 +378,7 @@ class _WebAnnouncementCard extends StatelessWidget {
                   ),
                   child: const Text('今天不再顯示'),
                 ),
-                const SizedBox(width: 8),
+                const Spacer(),
                 TextButton(
                   onPressed: onClose,
                   style: TextButton.styleFrom(
