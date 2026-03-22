@@ -202,6 +202,47 @@ PYTHONIOENCODING=utf-8 "C:/Users/CHELSEA/AppData/Local/Programs/Python/Python312
 
 ---
 
+## 已完成功能清單（2026-03-22 審視）
+
+**前台**
+- 首頁：Hero banner、首頁公告（from settings）、新品上架 grid、品牌特色區
+- 商品列表：分類篩選、品牌名稱 + 商品名 + 價格卡片
+- 商品詳情：桌面雙欄（55/45）、手機單欄、多圖輪播（箭頭 + 計數）、尺寸對照表（依分類）、可配置到貨天數、收藏心型、加入購物車 / 立即購買
+- 購物車：查看、調整數量、刪除
+- 結帳：地址填寫、配送方式選擇、訂單建立
+- 訂單成功頁
+- 我的訂單列表
+- 訂單詳情：狀態時間軸、收件資訊、金額摘要
+- 收藏清單
+- 個人資料頁：訂單統計、訂單狀態快覽、選單
+- 個人資料編輯、地址管理（透過 `/profile/address`）
+- 登入 / 註冊 / 忘記密碼
+
+**後台 Admin**
+- Dashboard：今日訂單、待處理訂單、會員數統計卡、快速連結
+- 商品管理：列表、新增 / 編輯 dialog（多圖上傳、品牌名稱、KRW→TWD 自動換算）、上下架切換
+- 訂單管理：列表 + 展開查看明細（商品、收件人、備註）、狀態 dropdown 即時更新
+- 會員管理：列表、查看訂單、切換 admin / 啟用狀態、備注
+- 系統設定：匯率、國際運費、免運門檻、到貨天數、首頁公告文字
+
+## 已知 Bug 與視覺問題
+
+- **行動版 Profile 子頁 NavBar** — `/profile/edit`、`/profile/address` 嵌套在 `StatefulShellBranch` 內，行動版子頁面會顯示底部 NavBar。Web 版正常，行動版上線前需改為獨立頂層路由或動態隱藏 BottomNavigationBar
+- **Hero banner 外部紋理圖** — `home_screen.dart` 抓 `transparenttextures.com`，網路不穩時 fallback 空白，應改為本地 asset 或移除
+- **`_StatusChip` 重複定義** — `orders_screen.dart` 與 `order_detail_screen.dart` 各自有一份相同邏輯，應抽到 `shared/widgets/`
+
+## 待實作功能（Placeholder 路由）
+
+以下路由已定義在 `app_router.dart`，但頁面尚未實作（目前顯示 `_PlaceholderScreen`）：
+
+優先順序：
+- 🔴 `/page/:pageKey` — 靜態說明頁（購買須知、FAQ、退換貨政策等）
+- 🔴 `/admin/dashboard/pages` — Admin 說明頁管理（搭配上方前台頁面）
+- 🔴 `/admin/dashboard/announcements` — Admin 公告管理
+- 🟠 `/announcements` — 前台公告列表頁（搭配 Admin 公告管理）
+- 🟠 `/search` — 搜尋頁
+- 🟢 `/admin/dashboard/orders/:orderId` — Admin 訂單詳情獨立頁（目前展開列已有基本資訊，低優先）
+
 ## 已知技術債
 
 > MVP 階段暫緩補齊，優先完成功能開發。
@@ -209,17 +250,6 @@ PYTHONIOENCODING=utf-8 "C:/Users/CHELSEA/AppData/Local/Programs/Python/Python312
 - **orders 缺 data 層** — 目前邏輯在 provider 直接呼叫 Supabase，未經過 datasource / repository / interface 分層
 - **admin 缺 domain models** — 系統設定目前以 `Map<String, String>` 傳遞，應抽出 `AdminSetting` 等 model
 - **各 feature 缺 `presentation/widgets/` 資料夾** — 可重用子元件目前直接寫在 screen 檔案內，未拆分
-- **Profile 子路由行動版 NavBar 問題** — `/profile/edit`、`/profile/address` 嵌套在 `StatefulShellBranch` 內，行動版子頁面會顯示底部 NavBar。Web 版正常，行動版上線前需改為獨立頂層路由（加自己的 Scaffold）或動態隱藏 BottomNavigationBar
-
-## 待實作功能（Placeholder 路由）
-
-以下路由已定義在 `app_router.dart`，但頁面尚未實作（目前顯示 `_PlaceholderScreen`）：
-
-- `/announcements` — 用戶公告列表頁
-- `/page/:pageKey` — 靜態說明頁（購買須知、FAQ、退換貨政策等）
-- `/admin/dashboard/orders/:orderId` — Admin 訂單詳情頁
-- `/admin/dashboard/announcements` — Admin 公告管理
-- `/admin/dashboard/pages` — Admin 說明頁管理
 
 ## 套件升級（MVP 完成後整批處理）
 
