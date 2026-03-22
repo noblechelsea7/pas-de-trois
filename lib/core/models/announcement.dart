@@ -1,3 +1,5 @@
+import '../utils/app_date_utils.dart';
+
 class Announcement {
   const Announcement({
     required this.id,
@@ -22,13 +24,10 @@ class Announcement {
         title: json['title'] as String,
         content: json['content'] as String? ?? '',
         isPublished: json['is_published'] as bool? ?? false,
-        startsAt: json['starts_at'] != null
-            ? DateTime.parse(json['starts_at'] as String).toLocal()
-            : null,
-        endsAt: json['ends_at'] != null
-            ? DateTime.parse(json['ends_at'] as String).toLocal()
-            : null,
-        createdAt: DateTime.parse(json['created_at'] as String).toLocal(),
+        startsAt: AppDateUtils.fromDbString(json['starts_at'] as String?),
+        endsAt: AppDateUtils.fromDbString(json['ends_at'] as String?),
+        createdAt:
+            AppDateUtils.fromDbStringRequired(json['created_at'] as String),
       );
 
   bool get isActive {

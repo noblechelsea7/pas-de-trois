@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/models/announcement.dart';
 import '../../../../core/models/site_page.dart';
+import '../../../../core/utils/app_date_utils.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -19,7 +20,7 @@ class SupabaseAdminDatasource {
   Future<int> getTodayOrderCount() async {
     final now = DateTime.now();
     final todayStart =
-        DateTime(now.year, now.month, now.day).toIso8601String();
+        AppDateUtils.toDbString(DateTime(now.year, now.month, now.day))!;
     final data =
         await _client.from('orders').select('id').gte('created_at', todayStart);
     return (data as List).length;
@@ -221,7 +222,7 @@ class SupabaseAdminDatasource {
     await _client.from('pages').update({
       'title': title,
       'content': content,
-      'updated_at': DateTime.now().toIso8601String(),
+      'updated_at': AppDateUtils.nowToDbString(),
     }).eq('key', key);
   }
 

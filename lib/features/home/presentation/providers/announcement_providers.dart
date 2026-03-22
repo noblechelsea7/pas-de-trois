@@ -3,13 +3,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/models/announcement.dart';
+import '../../../../core/utils/app_date_utils.dart';
 
 part 'announcement_providers.g.dart';
 
 @riverpod
 Future<List<Announcement>> activeAnnouncements(Ref ref) async {
   final client = Supabase.instance.client;
-  final now = DateTime.now().toUtc().toIso8601String();
+  final now = AppDateUtils.nowToDbString();
   final data = await client
       .from('announcements')
       .select()
@@ -25,7 +26,7 @@ Future<List<Announcement>> activeAnnouncements(Ref ref) async {
 @riverpod
 Future<Announcement?> latestActiveAnnouncement(Ref ref) async {
   final client = Supabase.instance.client;
-  final now = DateTime.now().toUtc().toIso8601String();
+  final now = AppDateUtils.nowToDbString();
   final data = await client
       .from('announcements')
       .select()

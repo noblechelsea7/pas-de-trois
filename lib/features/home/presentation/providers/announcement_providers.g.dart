@@ -7,7 +7,7 @@ part of 'announcement_providers.dart';
 // **************************************************************************
 
 String _$activeAnnouncementsHash() =>
-    r'c782a7e8ea090db7dcd8506701778c3411a43539';
+    r'cac990f9b48dc26052b019469d8352a74be33a29';
 
 /// See also [activeAnnouncements].
 @ProviderFor(activeAnnouncements)
@@ -27,7 +27,7 @@ final activeAnnouncementsProvider =
 typedef ActiveAnnouncementsRef =
     AutoDisposeFutureProviderRef<List<Announcement>>;
 String _$latestActiveAnnouncementHash() =>
-    r'caa9a89e69a53b8c056f733fe87e7bf412160ef1';
+    r'2927494f42d126de07950028654d3069e5b4cb75';
 
 /// See also [latestActiveAnnouncement].
 @ProviderFor(latestActiveAnnouncement)

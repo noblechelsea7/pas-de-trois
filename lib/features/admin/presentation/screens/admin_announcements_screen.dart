@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../core/models/announcement.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/app_date_utils.dart';
 import '../providers/admin_providers.dart';
 
 class AdminAnnouncementsScreen extends ConsumerWidget {
@@ -129,15 +129,11 @@ class _AnnouncementRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fmt = DateFormat('yy/MM/dd HH:mm');
     String dateRange = '無限制';
     if (announcement.startsAt != null || announcement.endsAt != null) {
-      final start = announcement.startsAt != null
-          ? fmt.format(announcement.startsAt!.toLocal())
-          : '—';
-      final end =
-          announcement.endsAt != null ? fmt.format(announcement.endsAt!.toLocal()) : '—';
-      dateRange = '$start ～ $end';
+      final start = AppDateUtils.format(announcement.startsAt, pattern: 'yy/MM/dd HH:mm');
+      final end = AppDateUtils.format(announcement.endsAt, pattern: 'yy/MM/dd HH:mm');
+      dateRange = '${start.isEmpty ? '—' : start} ～ ${end.isEmpty ? '—' : end}';
     }
 
     return Column(
@@ -382,8 +378,8 @@ class _AnnouncementEditDialogState
         'title': title,
         'content': _contentCtrl.text,
         'is_published': _isPublished,
-        'starts_at': _startsAt?.toIso8601String(),
-        'ends_at': _endsAt?.toIso8601String(),
+        'starts_at': AppDateUtils.toDbString(_startsAt),
+        'ends_at': AppDateUtils.toDbString(_endsAt),
       };
       if (_isEdit) {
         await ref
@@ -410,7 +406,7 @@ class _AnnouncementEditDialogState
 
   @override
   Widget build(BuildContext context) {
-    final fmt = DateFormat('yyyy/MM/dd HH:mm');
+    const fmtPattern = 'yyyy/MM/dd HH:mm';
     final contentHeight =
         (MediaQuery.sizeOf(context).height * 0.85 - 200).clamp(220.0, 380.0);
 
@@ -489,7 +485,7 @@ class _AnnouncementEditDialogState
                   Expanded(
                     child: _DatePickerField(
                       label: '開始日期',
-                      value: _startsAt != null ? fmt.format(_startsAt!) : null,
+                      value: _startsAt != null ? AppDateUtils.format(_startsAt, pattern: fmtPattern) : null,
                       onTap: () => _pickDateTime(context, isStart: true),
                       onClear: _startsAt != null
                           ? () => setState(() => _startsAt = null)
@@ -500,7 +496,7 @@ class _AnnouncementEditDialogState
                   Expanded(
                     child: _DatePickerField(
                       label: '結束日期',
-                      value: _endsAt != null ? fmt.format(_endsAt!) : null,
+                      value: _endsAt != null ? AppDateUtils.format(_endsAt, pattern: fmtPattern) : null,
                       onTap: () => _pickDateTime(context, isStart: false),
                       onClear: _endsAt != null
                           ? () => setState(() => _endsAt = null)
