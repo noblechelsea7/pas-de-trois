@@ -10,6 +10,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/static_page_screen.dart';
+import '../../features/admin/presentation/screens/admin_pages_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/profile_address_screen.dart';
@@ -450,8 +452,8 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.page,
         name: RouteNames.page,
-        builder: (context, state) => _PlaceholderScreen(
-          title: '說明頁 ${state.pathParameters['pageKey']}',
+        builder: (context, state) => StaticPageScreen(
+          pageKey: state.pathParameters['pageKey']!,
         ),
       ),
 
@@ -525,7 +527,7 @@ GoRouter appRouter(Ref ref) {
                 path: 'pages',
                 name: RouteNames.adminPages,
                 builder: (context, state) =>
-                    const _PlaceholderScreen(title: '說明頁管理'),
+                    const AdminPagesScreen(),
               ),
             ],
           ),

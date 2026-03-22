@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -40,4 +41,8 @@ abstract interface class IAdminRepository {
   // Settings
   Future<Map<String, String>> getAllSettings();
   Future<void> updateSetting(String key, String value);
+
+  // Pages
+  Future<List<SitePage>> getAllPages();
+  Future<void> updatePage(String key, String title, String content);
 }

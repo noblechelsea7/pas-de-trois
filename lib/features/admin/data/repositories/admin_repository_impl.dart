@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -76,4 +77,11 @@ class AdminRepositoryImpl implements IAdminRepository {
   @override
   Future<void> updateSetting(String key, String value) =>
       _datasource.updateSetting(key, value);
+
+  @override
+  Future<List<SitePage>> getAllPages() => _datasource.getAllPages();
+
+  @override
+  Future<void> updatePage(String key, String title, String content) =>
+      _datasource.updatePage(key, title, content);
 }

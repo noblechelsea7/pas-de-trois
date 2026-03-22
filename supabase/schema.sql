@@ -451,17 +451,24 @@ create policy "announcements_write_admin"
 -- ============================================================
 
 create table pages (
-  id          uuid primary key default uuid_generate_v4(),
-  key         text not null unique,
-  title       text not null,
-  content     text not null default '',
-  updated_at  timestamptz not null default now()
+  id           uuid primary key default uuid_generate_v4(),
+  key          text not null unique,
+  title        text not null,
+  content      text not null default '',
+  is_published boolean not null default true,
+  updated_at   timestamptz not null default now()
 );
 
 alter table pages enable row level security;
 
-create policy "pages_read_all"
-  on pages for select using (true);
+create policy "pages_read_published"
+  on pages for select
+  using (is_published = true or (
+    exists (
+      select 1 from profiles p
+      where p.id = auth.uid() and p.role = 'admin'
+    )
+  ));
 
 create policy "pages_write_admin"
   on pages for all
@@ -474,11 +481,14 @@ create policy "pages_write_admin"
 
 -- Seed default pages
 insert into pages (key, title, content) values
-  ('purchase_guide', '購買須知', ''),
-  ('payment_info',   '付款說明', ''),
-  ('shipping_info',  '配送說明', ''),
-  ('return_policy',  '退換貨政策', ''),
-  ('remittance_info','匯款資訊', '');
+  ('how-to-buy', '購買須知', E'## 購買流程\n1. 瀏覽商品，加入購物車\n2. 填寫收件資訊\n3. 確認訂單，完成付款\n4. 等待代購方購買並寄出\n5. 收到商品\n\n## 注意事項\n- 代購商品以韓國當地庫存為準\n- 下單後約 10-14 個工作天到貨\n- 如有問題請聯繫客服'),
+  ('faq', '常見問題', E'## 常見問題\n\n**Q: 運費怎麼計算？**\nA: 國際運費已包含在商品價格中，台灣境內配送另計。\n\n**Q: 可以退換貨嗎？**\nA: 商品有明顯瑕疵可於收貨後 3 天內申請退換。\n\n**Q: 多久會到貨？**\nA: 下單後約 10-14 個工作天。'),
+  ('return-policy', '退換貨政策', E'## 退換貨說明\n\n商品有明顯瑕疵（非人為損壞）可於收貨後 3 天內聯繫客服申請退換。\n\n以下情況恕不受理：\n- 人為損壞\n- 使用後商品\n- 主觀因素（尺寸、顏色偏差）\n\n退換處理時間約 7-14 個工作天。')
+on conflict (key) do nothing;
+
+-- Migration: add is_published column to pages (run if upgrading from initial schema)
+-- ALTER TABLE pages ADD COLUMN IF NOT EXISTS is_published boolean not null default true;
+-- UPDATE pages SET is_published = true WHERE is_published IS NULL;
 
 -- ============================================================
 -- SETTINGS (key-value store)

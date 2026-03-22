@@ -118,6 +118,12 @@ class _AdminSidebar extends StatelessWidget {
             path: RoutePaths.adminSettings,
             currentPath: currentPath,
           ),
+          _NavItem(
+            icon: Icons.description_rounded,
+            label: '說明頁',
+            path: RoutePaths.adminPages,
+            currentPath: currentPath,
+          ),
 
           const Spacer(),
 

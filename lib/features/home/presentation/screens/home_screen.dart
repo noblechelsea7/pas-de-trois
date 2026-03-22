@@ -51,7 +51,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 48)),
+        const SliverToBoxAdapter(child: _Footer()),
+        const SliverToBoxAdapter(child: SizedBox(height: 0)),
       ],
     );
   }
@@ -471,6 +472,82 @@ class _FeatureItem extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Footer
+// ---------------------------------------------------------------------------
+
+class _Footer extends StatelessWidget {
+  const _Footer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      color: AppColors.surface,
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
+      child: Column(
+        children: [
+          Text(
+            'PAS DE TROIS',
+            style: const TextStyle(
+              fontFamily: 'Pretendard',
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+              letterSpacing: 4,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Wrap(
+            spacing: 32,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              _FooterLink(label: '購買須知', pageKey: 'how-to-buy'),
+              _FooterLink(label: '常見問題', pageKey: 'faq'),
+              _FooterLink(label: '退換貨政策', pageKey: 'return-policy'),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Text(
+            '© 2025 Pas de trois. All rights reserved.',
+            style: const TextStyle(
+              fontFamily: 'Pretendard',
+              fontSize: 11,
+              color: AppColors.textHint,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FooterLink extends StatelessWidget {
+  const _FooterLink({required this.label, required this.pageKey});
+  final String label;
+  final String pageKey;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => context.goNamed(RouteNames.page, pathParameters: {'pageKey': pageKey}),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Pretendard',
+          fontSize: 12,
+          color: AppColors.textSecondary,
+          letterSpacing: 1,
+          decoration: TextDecoration.underline,
+          decorationColor: AppColors.textSecondary,
+        ),
+      ),
     );
   }
 }

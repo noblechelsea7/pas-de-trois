@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -68,3 +69,11 @@ Future<List<Order>> memberOrders(Ref ref, String userId) =>
 @riverpod
 Future<Map<String, String>> adminSettings(Ref ref) =>
     ref.read(adminRepositoryProvider).getAllSettings();
+
+// ---------------------------------------------------------------------------
+// Admin pages
+// ---------------------------------------------------------------------------
+
+@riverpod
+Future<List<SitePage>> adminPages(Ref ref) =>
+    ref.read(adminRepositoryProvider).getAllPages();

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../../core/models/site_page.dart';
 import '../../../auth/domain/models/user_profile.dart';
 import '../../../orders/domain/models/order.dart';
 import '../../../products/domain/models/product.dart';
@@ -202,5 +203,24 @@ class SupabaseAdminDatasource {
     await _client
         .from('settings')
         .upsert({'key': key, 'value': value}, onConflict: 'key');
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pages
+  // ---------------------------------------------------------------------------
+
+  Future<List<SitePage>> getAllPages() async {
+    final data = await _client.from('pages').select().order('key');
+    return (data as List)
+        .map((e) => SitePage.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  Future<void> updatePage(String key, String title, String content) async {
+    await _client.from('pages').update({
+      'title': title,
+      'content': content,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('key', key);
   }
 }

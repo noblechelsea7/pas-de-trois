@@ -285,5 +285,22 @@ final adminSettingsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef AdminSettingsRef = AutoDisposeFutureProviderRef<Map<String, String>>;
+String _$adminPagesHash() => r'72d4586919c5a0f0879bbdee60bf90f5b2d5fe98';
+
+/// See also [adminPages].
+@ProviderFor(adminPages)
+final adminPagesProvider = AutoDisposeFutureProvider<List<SitePage>>.internal(
+  adminPages,
+  name: r'adminPagesProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$adminPagesHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+typedef AdminPagesRef = AutoDisposeFutureProviderRef<List<SitePage>>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
