@@ -133,10 +133,10 @@ class _AnnouncementRow extends ConsumerWidget {
     String dateRange = '無限制';
     if (announcement.startsAt != null || announcement.endsAt != null) {
       final start = announcement.startsAt != null
-          ? fmt.format(announcement.startsAt!)
+          ? fmt.format(announcement.startsAt!.toLocal())
           : '—';
       final end =
-          announcement.endsAt != null ? fmt.format(announcement.endsAt!) : '—';
+          announcement.endsAt != null ? fmt.format(announcement.endsAt!.toLocal()) : '—';
       dateRange = '$start ～ $end';
     }
 
@@ -372,8 +372,8 @@ class _AnnouncementEditDialogState
         'title': title,
         'content': _contentCtrl.text,
         'is_published': _isPublished,
-        'starts_at': _startsAt?.toUtc().toIso8601String(),
-        'ends_at': _endsAt?.toUtc().toIso8601String(),
+        'starts_at': _startsAt?.toIso8601String(),
+        'ends_at': _endsAt?.toIso8601String(),
       };
       if (_isEdit) {
         await ref
