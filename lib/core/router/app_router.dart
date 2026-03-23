@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/home/presentation/screens/announcements_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
+import '../../features/home/presentation/screens/search_screen.dart';
 import '../../features/home/presentation/screens/static_page_screen.dart';
 import '../../features/admin/presentation/screens/admin_announcements_screen.dart';
 import '../../features/admin/presentation/screens/admin_pages_screen.dart';
@@ -465,7 +466,9 @@ GoRouter appRouter(Ref ref) {
       GoRoute(
         path: RoutePaths.search,
         name: RouteNames.search,
-        builder: (context, state) => const _PlaceholderScreen(title: '搜尋'),
+        builder: (context, state) => SearchScreen(
+          initialQuery: state.uri.queryParameters['q'],
+        ),
       ),
 
       // ---------------------------------------------------------------

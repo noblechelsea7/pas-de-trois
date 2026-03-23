@@ -78,10 +78,10 @@ class WebNavBar extends ConsumerWidget {
 
                       // ---- Right icons ----
                       const SizedBox(width: 16),
-                      _NavIconButton(
-                        icon: Icons.search_outlined,
-                        tooltip: '搜尋',
-                        onTap: () => navigationShell.goBranch(1),
+                      _NavSearchField(
+                        onSubmit: (q) => context.go(
+                          Uri(path: RoutePaths.search, queryParameters: {'q': q}).toString(),
+                        ),
                       ),
                       _MemberMenuButton(
                         onGoProfile: () => navigationShell.goBranch(4),
@@ -251,6 +251,110 @@ class _NavIconButton extends StatelessWidget {
           child: Icon(icon, size: 22, color: AppColors.textPrimary),
         ),
       ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Inline search field (icon → expand → type → Enter → navigate)
+// ---------------------------------------------------------------------------
+
+class _NavSearchField extends StatefulWidget {
+  const _NavSearchField({required this.onSubmit});
+  final ValueChanged<String> onSubmit;
+
+  @override
+  State<_NavSearchField> createState() => _NavSearchFieldState();
+}
+
+class _NavSearchFieldState extends State<_NavSearchField> {
+  bool _expanded = false;
+  final _ctrl = TextEditingController();
+  final _focusNode = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode.addListener(() {
+      if (!_focusNode.hasFocus && _ctrl.text.isEmpty) {
+        setState(() => _expanded = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _toggle() {
+    setState(() => _expanded = true);
+    _focusNode.requestFocus();
+  }
+
+  void _submit() {
+    final q = _ctrl.text.trim();
+    if (q.isEmpty) return;
+    widget.onSubmit(q);
+    _ctrl.clear();
+    _focusNode.unfocus();
+    setState(() => _expanded = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      width: _expanded ? 220 : 40,
+      height: 36,
+      child: _expanded
+          ? TextField(
+              controller: _ctrl,
+              focusNode: _focusNode,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _submit(),
+              style: const TextStyle(fontSize: 13),
+              decoration: InputDecoration(
+                hintText: '搜尋商品...',
+                hintStyle: TextStyle(
+                    fontSize: 13, color: AppColors.textHint),
+                prefixIcon: const Icon(Icons.search, size: 18),
+                prefixIconConstraints:
+                    const BoxConstraints(minWidth: 36),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.close, size: 16),
+                  onPressed: () {
+                    _ctrl.clear();
+                    _focusNode.unfocus();
+                    setState(() => _expanded = false);
+                  },
+                ),
+                suffixIconConstraints:
+                    const BoxConstraints(minWidth: 32),
+                filled: true,
+                fillColor: AppColors.surface,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: EdgeInsets.zero,
+                isDense: true,
+              ),
+            )
+          : Tooltip(
+              message: '搜尋',
+              child: InkWell(
+                onTap: _toggle,
+                borderRadius: BorderRadius.circular(20),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Icon(Icons.search_outlined,
+                      size: 22, color: AppColors.textPrimary),
+                ),
+              ),
+            ),
     );
   }
 }
@@ -566,10 +670,10 @@ class WebNavBarStandalone extends ConsumerWidget {
 
                   // Right icons
                   const SizedBox(width: 16),
-                  _NavIconButton(
-                    icon: Icons.search_outlined,
-                    tooltip: '搜尋',
-                    onTap: () => context.go(RoutePaths.products),
+                  _NavSearchField(
+                    onSubmit: (q) => context.go(
+                      Uri(path: RoutePaths.search, queryParameters: {'q': q}).toString(),
+                    ),
                   ),
                   _MemberMenuButton(
                     onGoProfile: () => context.go(RoutePaths.profile),

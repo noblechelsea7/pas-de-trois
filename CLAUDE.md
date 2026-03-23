@@ -245,7 +245,7 @@ PYTHONIOENCODING=utf-8 "C:/Users/CHELSEA/AppData/Local/Programs/Python/Python312
 - 🔴 `/admin/dashboard/pages` — Admin 說明頁管理（搭配上方前台頁面）
 - 🔴 `/admin/dashboard/announcements` — Admin 公告管理
 - 🟠 `/announcements` — 前台公告列表頁（搭配 Admin 公告管理）
-- 🟠 `/search` — 搜尋頁
+- ~~`/search` — 搜尋頁~~ ✅ 已完成
 - 🟢 `/admin/dashboard/orders/:orderId` — Admin 訂單詳情獨立頁（目前展開列已有基本資訊，低優先）
 
 ## 已知技術債
