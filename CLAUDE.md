@@ -188,6 +188,11 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
     - `*.freezed.dart`
     - `*.g.dart`
     - `*.gr.dart`
+17. **日期時間處理規範** — 所有日期操作一律使用 `AppDateUtils`（`lib/core/utils/app_date_utils.dart`）。禁止直接使用 `.toUtc()`、`.toIso8601String()`、`DateTime.parse(...).toLocal()`。
+    - 存入 DB：`AppDateUtils.toDbString(dt)`
+    - 從 DB 讀出：`AppDateUtils.fromDbString(s)` / `AppDateUtils.fromDbStringRequired(s)`
+    - 當前時間 UTC 字串（query 用）：`AppDateUtils.nowToDbString()`
+    - UI 顯示格式化：`AppDateUtils.format(dt, pattern: 'yyyy/MM/dd HH:mm')`
 
 ## Python 路徑
 
