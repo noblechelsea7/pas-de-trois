@@ -97,6 +97,69 @@ class _PlaceholderScreen extends StatelessWidget {
 }
 
 // ---------------------------------------------------------------------------
+// 404 Not Found page
+// ---------------------------------------------------------------------------
+
+class _NotFoundScreen extends StatelessWidget {
+  const _NotFoundScreen({required this.uri});
+  final String uri;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                '404',
+                style: theme.textTheme.displayLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 96,
+                  letterSpacing: 4,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '找不到這個頁面',
+                style: theme.textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '您訪問的頁面不存在或已移除',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () => GoRouter.of(context).go(RoutePaths.home),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  foregroundColor: theme.colorScheme.onPrimary,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text('回到首頁'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Product detail page — has its own Scaffold (outside shell)
 // ---------------------------------------------------------------------------
 
@@ -290,6 +353,7 @@ GoRouter appRouter(Ref ref) {
 
       return null;
     },
+    errorBuilder: (context, state) => _NotFoundScreen(uri: state.uri.toString()),
     routes: [
       // ---------------------------------------------------------------
       // Stateful shell — persistent navigation branches
