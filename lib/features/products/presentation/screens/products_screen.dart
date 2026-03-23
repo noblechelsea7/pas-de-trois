@@ -14,12 +14,10 @@ class ProductsScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductsScreenState extends ConsumerState<ProductsScreen> {
-  final _searchController = TextEditingController();
   final _scrollController = ScrollController();
 
   @override
   void dispose() {
-    _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -36,23 +34,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
         child: CustomScrollView(
       controller: _scrollController,
       slivers: [
-        // App bar with search field
-        SliverAppBar(
-          backgroundColor: AppColors.white,
-          surfaceTintColor: Colors.transparent,
-          pinned: true,
-          titleSpacing: AppBreakpoints.isWeb(context) ? 24 : 16,
-          title: _SearchBar(
-            controller: _searchController,
-            onChanged: (q) =>
-                ref.read(searchQueryProvider.notifier).set(q),
-            onClear: () {
-              _searchController.clear();
-              ref.read(searchQueryProvider.notifier).set('');
-            },
-          ),
-        ),
-
         // Category chips — only on mobile (web uses top nav)
         if (!AppBreakpoints.isWeb(context))
           SliverToBoxAdapter(
@@ -142,62 +123,6 @@ class _ProductsScreenState extends ConsumerState<ProductsScreen> {
           },
         ),
       ],
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Search bar widget
-// ---------------------------------------------------------------------------
-
-class _SearchBar extends StatelessWidget {
-  const _SearchBar({
-    required this.controller,
-    required this.onChanged,
-    required this.onClear,
-  });
-
-  final TextEditingController controller;
-  final ValueChanged<String> onChanged;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 40,
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        style: AppTextStyles.bodyMedium,
-        decoration: InputDecoration(
-          hintText: '搜尋商品...',
-          prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textHint),
-          suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  icon: const Icon(Icons.close, size: 18),
-                  color: AppColors.textHint,
-                  padding: EdgeInsets.zero,
-                  onPressed: onClear,
-                )
-              : null,
-          filled: true,
-          fillColor: AppColors.surface,
-          contentPadding: EdgeInsets.zero,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: AppColors.border),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(20),
-            borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
-          ),
         ),
       ),
     );
