@@ -31,7 +31,8 @@ class SupabaseProductDatasource {
       builder = builder.eq('category_id', categoryId);
     }
     if (query != null && query.isNotEmpty) {
-      builder = builder.ilike('name', '%$query%');
+      builder = builder.or(
+          'name.ilike.%$query%,brand_name.ilike.%$query%,description.ilike.%$query%');
     }
 
     final data = await builder.order('created_at', ascending: false);
