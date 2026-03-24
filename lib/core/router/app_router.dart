@@ -223,6 +223,43 @@ class _ProductDetailBottomBarLoader extends ConsumerWidget {
 }
 
 // ---------------------------------------------------------------------------
+// Profile sub-page wrapper — Scaffold for top-level profile child routes
+// ---------------------------------------------------------------------------
+
+class _ProfileSubPage extends StatelessWidget {
+  const _ProfileSubPage({required this.child});
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (AppBreakpoints.isWeb(context)) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Column(
+          children: [
+            const WebNavBarStandalone(),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 800),
+                  child: child,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Mobile: just a Scaffold — the child's SliverAppBar provides the back button
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: child,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Shell scaffold (Web nav + App bottom nav handled separately inside shell)
 // ---------------------------------------------------------------------------
 
@@ -413,24 +450,28 @@ GoRouter appRouter(Ref ref) {
                 path: RoutePaths.profile,
                 name: RouteNames.profile,
                 builder: (context, state) => const ProfileScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'edit',
-                    name: RouteNames.profileEdit,
-                    builder: (context, state) =>
-                        const ProfileEditScreen(),
-                  ),
-                  GoRoute(
-                    path: 'address',
-                    name: RouteNames.profileAddress,
-                    builder: (context, state) =>
-                        const ProfileAddressScreen(),
-                  ),
-                ],
               ),
             ],
           ),
         ],
+      ),
+
+      // ---------------------------------------------------------------
+      // Profile sub-pages (outside shell — no bottom nav on mobile)
+      // ---------------------------------------------------------------
+      GoRoute(
+        path: RoutePaths.profileEdit,
+        name: RouteNames.profileEdit,
+        builder: (context, state) => const _ProfileSubPage(
+          child: ProfileEditScreen(),
+        ),
+      ),
+      GoRoute(
+        path: RoutePaths.profileAddress,
+        name: RouteNames.profileAddress,
+        builder: (context, state) => const _ProfileSubPage(
+          child: ProfileAddressScreen(),
+        ),
       ),
 
       // ---------------------------------------------------------------
