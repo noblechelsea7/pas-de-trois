@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Platforms:** Flutter Web (primary) + Flutter App (secondary)
 **Language:** Traditional Chinese (繁體中文)
 **Style:** Korean minimalist luxury (SLOWAND-inspired)
+**Stage:** MVP 功能完整，作為面試作品集使用。下一階段將在私人 repo 繼續開發上線營運版本。
 
 - **Package name:** `korea_proxy`
 - **Dart SDK:** ^3.11.0
@@ -25,6 +26,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | build_runner + riverpod_generator | Code generation |
 | cached_network_image | Image caching |
 | flutter_dotenv | Environment variables |
+| shared_preferences | Local storage (search history, announcement dismiss) |
 
 ## Common Commands
 
@@ -64,8 +66,10 @@ lib/
   core/
     theme/           # AppTheme, colors, typography
     constants/       # AppConstants, ShippingConstants
-    utils/           # PriceCalculator, ShippingCalculator
-    router/          # AppRouter (go_router)
+    models/          # Announcement (shared domain model)
+    utils/           # PriceCalculator, ShippingCalculator, AppDateUtils
+    layout/          # WebNavBar, WebNavBarStandalone
+    router/          # AppRouter (go_router), RoutePaths, RouteNames
   features/
     auth/
       data/
@@ -105,6 +109,10 @@ lib/
       data/
       domain/
       presentation/
+    home/
+      presentation/
+        screens/         # HomeScreen, SearchScreen, AnnouncementsScreen, StaticPageScreen
+        providers/       # AnnouncementProviders, SearchProviders
     admin/
       data/
       domain/
@@ -183,7 +191,7 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
 12. **測試命名：should_[預期結果]_when_[條件]**
 13. **Web 版非 ShellRoute 子頁面（如商品詳情）需自行在 Scaffold body 加入 `WebNavBarStandalone()`，不會自動繼承頂部導覽列**
 14. **循環依賴解法：將常數/路徑抽到獨立檔案（如 `route_paths.dart`），再由主檔用 `export` 重新匯出，讓既有 import 不受影響**
-15. **跨頁面持久化的 notifier 使用 `@Riverpod(keepAlive: true)`** — 需要在 navigation 之間保留 state 的 notifier（如購物車）必須加 keepAlive，否則離開頁面時 state 會被 dispose 重置
+15. **跨頁面持久化的 notifier 使用 `@Riverpod(keepAlive: true)`** — 需要在 navigation 之間保留 state 的 notifier（如購物車、搜尋歷史）必須加 keepAlive，否則離開頁面時 state 會被 dispose 重置
 16. **執行 build_runner 後必須將 generated files 一起 commit** — 每次執行 `dart run build_runner build` 之後，必須將以下檔案加入同一個 commit，否則 CI build 會失敗：
     - `*.freezed.dart`
     - `*.g.dart`
@@ -193,6 +201,7 @@ Checkout Total = Display Price + Taiwan Domestic Shipping
     - 從 DB 讀出：`AppDateUtils.fromDbString(s)` / `AppDateUtils.fromDbStringRequired(s)`
     - 當前時間 UTC 字串（query 用）：`AppDateUtils.nowToDbString()`
     - UI 顯示格式化：`AppDateUtils.format(dt, pattern: 'yyyy/MM/dd HH:mm')`
+18. **購物車操作採 optimistic update + rollback 模式** — 本地 state 先更新，遠端失敗時回滾 state 並 rethrow，UI 層 catch 後顯示 SnackBar 錯誤提示
 
 ## Python 路徑
 
@@ -207,50 +216,52 @@ PYTHONIOENCODING=utf-8 "C:/Users/CHELSEA/AppData/Local/Programs/Python/Python312
 
 ---
 
-## 已完成功能清單（2026-03-22 審視）
+## 已完成功能清單（2026-03-24 更新）
 
 **前台**
-- 首頁：Hero banner、首頁公告（from settings）、新品上架 grid、品牌特色區
-- 商品列表：分類篩選、品牌名稱 + 商品名 + 價格卡片
+- 首頁：Hero banner（純漸層背景）、新品上架 grid、品牌特色區、Footer（含靜態頁連結）
+- 首頁公告彈窗：Web 左下浮動卡片 / 手機 bottom sheet，支援「今天不再顯示」
+- 搜尋：Web NavBar inline 展開搜尋欄 / 手機版 `/search` 獨立頁面、搜尋歷史（SharedPreferences 最近 10 筆）、多欄位搜尋（name + brand_name + description）
+- 商品列表：分類篩選（手機 chip / Web 頂部導覽）、品牌名稱 + 商品名 + 價格卡片
 - 商品詳情：桌面雙欄（55/45）、手機單欄、多圖輪播（箭頭 + 計數）、尺寸對照表（依分類）、可配置到貨天數、收藏心型、加入購物車 / 立即購買
-- 購物車：查看、調整數量、刪除
-- 結帳：地址填寫、配送方式選擇、訂單建立
+- 購物車：查看、調整數量、刪除、清空，optimistic update + rollback + 錯誤回饋 SnackBar
+- 結帳：地址填寫 / 選擇已儲存地址、配送方式選擇、備註、訂單摘要、防重複點擊送出
 - 訂單成功頁
 - 我的訂單列表
 - 訂單詳情：狀態時間軸、收件資訊、金額摘要
 - 收藏清單
 - 個人資料頁：訂單統計、訂單狀態快覽、選單
-- 個人資料編輯、地址管理（透過 `/profile/address`）
+- 個人資料編輯、地址管理（獨立頂層路由，行動版無底部 NavBar）
 - 登入 / 註冊 / 忘記密碼
+- 靜態說明頁：購買須知、FAQ、退換貨政策、配送說明、付款方式（`/pages/:pageKey`）
+- 前台公告列表頁（`/announcements`）
+- 404 頁面（GoRouter errorBuilder）
 
 **後台 Admin**
 - Dashboard：今日訂單、待處理訂單、會員數統計卡、快速連結
 - 商品管理：列表、新增 / 編輯 dialog（多圖上傳、品牌名稱、KRW→TWD 自動換算）、上下架切換
 - 訂單管理：列表 + 展開查看明細（商品、收件人、備註）、狀態 dropdown 即時更新
 - 會員管理：列表、查看訂單、切換 admin / 啟用狀態、備注
-- 系統設定：匯率、國際運費、免運門檻、到貨天數、首頁公告文字
+- 系統設定：匯率、國際運費、免運門檻、到貨天數
+- 公告管理：CRUD、日期 + 時間選擇器、啟用 / 停用切換
+- 說明頁管理：CRUD（`/admin/dashboard/pages`）
+
+**核心工具**
+- AppDateUtils：統一日期時間處理（UTC 存取、本地顯示、格式化）
+- PriceCalculator / ShippingCalculator：金額與運費計算
+- GitHub Actions：自動部署
 
 ## 已知 Bug 與視覺問題
 
-- **行動版 Profile 子頁 NavBar** — `/profile/edit`、`/profile/address` 嵌套在 `StatefulShellBranch` 內，行動版子頁面會顯示底部 NavBar。Web 版正常，行動版上線前需改為獨立頂層路由或動態隱藏 BottomNavigationBar
-- **Hero banner 外部紋理圖** — `home_screen.dart` 抓 `transparenttextures.com`，網路不穩時 fallback 空白，應改為本地 asset 或移除
 - **`_StatusChip` 重複定義** — `orders_screen.dart` 與 `order_detail_screen.dart` 各自有一份相同邏輯，應抽到 `shared/widgets/`
 
 ## 待實作功能（Placeholder 路由）
 
-以下路由已定義在 `app_router.dart`，但頁面尚未實作（目前顯示 `_PlaceholderScreen`）：
-
-優先順序：
-- 🔴 `/page/:pageKey` — 靜態說明頁（購買須知、FAQ、退換貨政策等）
-- 🔴 `/admin/dashboard/pages` — Admin 說明頁管理（搭配上方前台頁面）
-- 🔴 `/admin/dashboard/announcements` — Admin 公告管理
-- 🟠 `/announcements` — 前台公告列表頁（搭配 Admin 公告管理）
-- ~~`/search` — 搜尋頁~~ ✅ 已完成
 - 🟢 `/admin/dashboard/orders/:orderId` — Admin 訂單詳情獨立頁（目前展開列已有基本資訊，低優先）
 
 ## 已知技術債
 
-> MVP 階段暫緩補齊，優先完成功能開發。
+> MVP 階段暫緩補齊，上線營運版本再處理。
 
 - **orders 缺 data 層** — 目前邏輯在 provider 直接呼叫 Supabase，未經過 datasource / repository / interface 分層
 - **admin 缺 domain models** — 系統設定目前以 `Map<String, String>` 傳遞，應抽出 `AdminSetting` 等 model
