@@ -1180,8 +1180,8 @@ class _CartActionButtons extends ConsumerWidget {
       );
     }
 
-    void addToCart() {
-      ref.read(cartItemsProvider.notifier).add(
+    Future<void> addToCart() async {
+      await ref.read(cartItemsProvider.notifier).add(
             product.id,
             selectedVariants: Map.from(selectedVariants),
             quantity: quantity,
@@ -1192,20 +1192,30 @@ class _CartActionButtons extends ConsumerWidget {
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () {
+            onPressed: () async {
               if (!allSelected) {
                 showVariantWarning();
                 return;
               }
-              addToCart();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('已加入購物車'),
-                  backgroundColor: AppColors.primary,
-                  behavior: SnackBarBehavior.floating,
-                  duration: Duration(seconds: 2),
-                ),
-              );
+              try {
+                await addToCart();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('已加入購物車'),
+                      backgroundColor: AppColors.primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('操作失敗，請重試')),
+                  );
+                }
+              }
             },
             icon: const Icon(Icons.shopping_bag_outlined, size: 18),
             label: const Text('加入購物車'),
@@ -1214,13 +1224,21 @@ class _CartActionButtons extends ConsumerWidget {
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               if (!allSelected) {
                 showVariantWarning();
                 return;
               }
-              addToCart();
-              context.push(RoutePaths.checkout);
+              try {
+                await addToCart();
+                if (context.mounted) context.push(RoutePaths.checkout);
+              } catch (_) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('操作失敗，請重試')),
+                  );
+                }
+              }
             },
             child: const Text('直接購買'),
           ),

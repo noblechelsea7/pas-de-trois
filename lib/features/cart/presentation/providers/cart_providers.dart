@@ -111,8 +111,14 @@ class CartItems extends _$CartItems {
     final updated = existing != null
         ? existing.copyWith(quantity: existing.quantity + quantity)
         : item;
+    final prev = state;
     state = {...state, key: updated};
-    await _currentRepo?.upsertItem(updated);
+    try {
+      await _currentRepo?.upsertItem(updated);
+    } catch (e) {
+      state = prev;
+      rethrow;
+    }
   }
 
   Future<void> updateQuantity(String cartKey, int quantity) async {
@@ -123,20 +129,38 @@ class CartItems extends _$CartItems {
     final item = state[cartKey];
     if (item == null) return;
     final updated = item.copyWith(quantity: quantity);
+    final prev = state;
     state = {...state, cartKey: updated};
-    await _currentRepo?.upsertItem(updated);
+    try {
+      await _currentRepo?.upsertItem(updated);
+    } catch (e) {
+      state = prev;
+      rethrow;
+    }
   }
 
   Future<void> remove(String cartKey) async {
     final item = state[cartKey];
     if (item == null) return;
+    final prev = state;
     state = {...state}..remove(cartKey);
-    await _currentRepo?.removeItem(item);
+    try {
+      await _currentRepo?.removeItem(item);
+    } catch (e) {
+      state = prev;
+      rethrow;
+    }
   }
 
   Future<void> clear() async {
+    final prev = state;
     state = {};
-    await _currentRepo?.clearCart();
+    try {
+      await _currentRepo?.clearCart();
+    } catch (e) {
+      state = prev;
+      rethrow;
+    }
   }
 
   int get totalItemCount =>

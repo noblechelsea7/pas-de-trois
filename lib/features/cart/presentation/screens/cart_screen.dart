@@ -164,7 +164,13 @@ class _CartContent extends ConsumerWidget {
             TextButton(
               onPressed: resolvedItems.isEmpty
                   ? null
-                  : () => ref.read(cartItemsProvider.notifier).clear(),
+                  : () async {
+                      try {
+                        await ref.read(cartItemsProvider.notifier).clear();
+                      } catch (_) {
+                        if (context.mounted) _showCartError(context);
+                      }
+                    },
               child: Text(
                 '清空',
                 style: AppTextStyles.bodySmall.copyWith(
@@ -196,21 +202,39 @@ class _CartContent extends ConsumerWidget {
                   product: entry.product,
                   cartItem: entry.cartItem,
                   intlRate: intlRate,
-                  onIncrease: () => ref
-                      .read(cartItemsProvider.notifier)
-                      .updateQuantity(
-                        entry.cartItem.key,
-                        entry.cartItem.quantity + 1,
-                      ),
-                  onDecrease: () => ref
-                      .read(cartItemsProvider.notifier)
-                      .updateQuantity(
-                        entry.cartItem.key,
-                        entry.cartItem.quantity - 1,
-                      ),
-                  onRemove: () => ref
-                      .read(cartItemsProvider.notifier)
-                      .remove(entry.cartItem.key),
+                  onIncrease: () async {
+                    try {
+                      await ref
+                          .read(cartItemsProvider.notifier)
+                          .updateQuantity(
+                            entry.cartItem.key,
+                            entry.cartItem.quantity + 1,
+                          );
+                    } catch (_) {
+                      if (context.mounted) _showCartError(context);
+                    }
+                  },
+                  onDecrease: () async {
+                    try {
+                      await ref
+                          .read(cartItemsProvider.notifier)
+                          .updateQuantity(
+                            entry.cartItem.key,
+                            entry.cartItem.quantity - 1,
+                          );
+                    } catch (_) {
+                      if (context.mounted) _showCartError(context);
+                    }
+                  },
+                  onRemove: () async {
+                    try {
+                      await ref
+                          .read(cartItemsProvider.notifier)
+                          .remove(entry.cartItem.key);
+                    } catch (_) {
+                      if (context.mounted) _showCartError(context);
+                    }
+                  },
                 );
               },
               childCount: resolvedItems.length,
@@ -234,6 +258,12 @@ class _CartContent extends ConsumerWidget {
       ],
     );
   }
+}
+
+void _showCartError(BuildContext context) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('操作失敗，請重試')),
+  );
 }
 
 // ---------------------------------------------------------------------------
