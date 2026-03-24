@@ -228,14 +228,20 @@ class _HeroBanner extends StatelessWidget {
       color: AppColors.primary,
       child: Stack(
         children: [
-          // subtle texture overlay
+          // subtle gradient overlay
           Positioned.fill(
-            child: Opacity(
-              opacity: 0.08,
-              child: Image.network(
-                'https://www.transparenttextures.com/patterns/subtle-white-feathers.png',
-                repeat: ImageRepeat.repeat,
-                errorBuilder: (context2, err2, st2) => const SizedBox.shrink(),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.06),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.10),
+                  ],
+                  stops: const [0.0, 0.5, 1.0],
+                ),
               ),
             ),
           ),
