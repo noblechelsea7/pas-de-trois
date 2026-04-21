@@ -1,7 +1,7 @@
 -- ============================================================
 -- Pas de trois — Supabase Schema
 -- Platform: Korean Proxy Shopping
--- Version: v2.0（代購管理系統 × 代購網站 統一版）
+-- Version: v2.1（batches/products 欄位修正、匯率方向統一）
 -- Updated: 2026-04-21
 -- ============================================================
 
@@ -238,15 +238,21 @@ insert into categories (name, slug, sort_order) values
 -- ============================================================
 
 create table batches (
-  id                      uuid primary key default uuid_generate_v4(),
-  name                    text not null,
-  purchase_date           date,
-  intl_shipping_cost_twd  integer default 0,
-  notes                   text,
-  created_at              timestamptz not null default now()
+  id                          uuid primary key default uuid_generate_v4(),
+  name                        text not null,
+  ship_date                   date,
+  intl_shipping_cost_krw      integer,
+  intl_shipping_exchange_rate numeric(6,2),
+  intl_shipping_cost_twd      integer,
+  notes                       text,
+  created_at                  timestamptz not null default now()
 );
 
-comment on table batches is '採購批次，一次寄貨 = 一個批次，國際運費以整批記錄';
+comment on table  batches                              is '採購批次，一次寄貨 = 一個批次';
+comment on column batches.ship_date                   is '整批貨從韓國實際寄出的日期';
+comment on column batches.intl_shipping_cost_krw      is '韓幣國際運費';
+comment on column batches.intl_shipping_exchange_rate is '付運費當下匯率：1 TWD = 幾 KRW（例如填 45），換算公式：intl_shipping_cost_twd = ROUND(intl_shipping_cost_krw / intl_shipping_exchange_rate)';
+comment on column batches.intl_shipping_cost_twd      is '台幣國際運費，用韓幣付時由前端換算填入，用台幣付時直接填入，可手動覆蓋';
 
 alter table batches enable row level security;
 
@@ -270,8 +276,9 @@ create table products (
   krw_price             integer not null,
   twd_price             integer not null,
   cost_krw              integer,
-  exchange_rate         numeric(6,4),
+  exchange_rate         numeric(6,2),
   cost_twd              integer,
+  purchased_at          date,
   weight_kg             numeric(6,3) not null,
   domestic_shipping_fee integer not null default 0,
   stock_qty             integer default 0,
@@ -285,8 +292,9 @@ create table products (
 
 comment on column products.batch_id      is '所屬採購批次';
 comment on column products.cost_krw      is '韓幣買價';
-comment on column products.exchange_rate is '購入當下匯率，1 KRW = ? TWD';
-comment on column products.cost_twd      is 'ROUND(cost_krw * exchange_rate)，可手動覆蓋';
+comment on column products.exchange_rate is '購入當下匯率：1 TWD = 幾 KRW（例如填 45），換算公式：cost_twd = ROUND(cost_krw / exchange_rate)';
+comment on column products.cost_twd      is 'ROUND(cost_krw / exchange_rate)，可手動覆蓋';
+comment on column products.purchased_at  is '個別商品實際購入日期（同批次內不同商品可能不同天，與批次 ship_date 不同）';
 comment on column products.stock_qty     is '進貨數量';
 comment on column products.is_active     is '商品是否存在，false = 封存，管理後台幾乎不顯示';
 comment on column products.is_published  is '是否在網站前台顯示，false = 後台可操作但前台看不到';
@@ -704,6 +712,7 @@ select
   p.cost_krw,
   p.exchange_rate,
   p.cost_twd,
+  p.purchased_at,
   p.krw_price,
   p.twd_price,
   p.stock_qty,
@@ -727,11 +736,13 @@ comment on view product_stock_view is '商品含庫存計算，available_qty 排
 -- 批次財務 view
 create or replace view public.batch_finance_view as
 select
-  b.id                            as batch_id,
-  b.name                          as batch_name,
-  b.purchase_date,
+  b.id                              as batch_id,
+  b.name                            as batch_name,
+  b.ship_date,
+  b.intl_shipping_cost_krw,
+  b.intl_shipping_exchange_rate,
   b.intl_shipping_cost_twd,
-  count(distinct o.id)            as order_count,
+  count(distinct o.id)              as order_count,
   coalesce(sum(
     case when o.status != '已取消'
     then oi.unit_price * oi.quantity else 0 end
@@ -757,21 +768,22 @@ select
     case when o.status != '已取消'
     then (oi.product_snapshot->>'cost_twd')::integer * oi.quantity
     else 0 end
-  ), 0) - b.intl_shipping_cost_twd as profit
+  ), 0) - coalesce(b.intl_shipping_cost_twd, 0) as profit
 from batches b
 left join products p on p.batch_id = b.id
 left join order_items oi on oi.product_id = p.id
 left join orders o on o.id = oi.order_id
 group by b.id;
 
-comment on view batch_finance_view is '批次財務報表，profit 已扣除國際運費';
+comment on view batch_finance_view is '批次財務報表，profit 已扣除國際運費（intl_shipping_cost_twd 為 null 時視為 0）';
 
 -- ============================================================
 -- INDEXES for performance
 -- ============================================================
 
 create index idx_products_category   on products(category_id);
-create index idx_products_batch      on products(batch_id);
+create index idx_products_batch        on products(batch_id);
+create index idx_products_purchased_at on products(purchased_at);
 create index idx_products_is_active  on products(is_active);
 create index idx_products_published  on products(is_published);
 create index idx_product_images_product on product_images(product_id);
